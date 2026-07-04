@@ -576,7 +576,11 @@ export default function ProfilePage() {
     ? Object.entries(parsedAdditional).filter(([k, v]) => k !== "summary" && !isVitalsKey(k) && v)
     : [];
 
-  const conditions = profile?.medicalConditions?.split(",").map(s => s.trim()).filter(Boolean) ?? [];
+  const conditions: string[] = profile?.medicalConditions?.split(",").map((s: string) => s.trim()).filter((s: string) => s.length > 0) ?? [];
+  const aiSummary: string | null = (() => {
+    const s = parsedAdditional?.summary;
+    return typeof s === "string" && s.length > 0 ? s : null;
+  })();
   const activityLabels: Record<string, string> = {
     sedentary: "Sedentary", light: "Lightly Active", moderate: "Moderately Active",
     active: "Active", very_active: "Very Active",
@@ -758,6 +762,97 @@ export default function ProfilePage() {
         </Form>
       ) : (
         <div className="space-y-4">
+          {/* ── Personalized Details ─────────────────────────────────── */}
+          <Card className="border-teal-200 shadow-sm bg-gradient-to-br from-teal-50/40 to-white">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2 text-teal-800">
+                <Sparkles className="w-4 h-4 text-teal-600" />Personalized Details
+              </CardTitle>
+              <CardDescription className="text-xs text-teal-600">
+                Your key health information at a glance
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              {/* Key stats — always shown */}
+              <div>
+                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Core Info</p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                  {(
+                    [
+                      { label: "Name", value: profile?.name ?? null },
+                      { label: "Age", value: profile?.age ? `${profile.age} yrs` : null },
+                      { label: "Gender", value: profile?.gender ? (genderLabels[profile.gender] ?? profile.gender) : null },
+                      { label: "Blood Group", value: profile?.bloodGroup ?? null },
+                      { label: "Height", value: profile?.height ? `${profile.height} cm` : null },
+                      { label: "Weight", value: profile?.weight ? `${profile.weight} kg` : null },
+                      { label: "BMI", value: profile?.weight && profile?.height
+                          ? String((profile.weight / Math.pow(profile.height / 100, 2)).toFixed(1))
+                          : null },
+                      { label: "Location", value: profile?.location ?? null },
+                    ] as Array<{ label: string; value: string | null }>
+                  ).filter((f): f is { label: string; value: string } => Boolean(f.value)).map(({ label, value }) => (
+                    <div key={label} className="bg-white rounded-lg border border-teal-100 px-3 py-2.5 shadow-xs">
+                      <p className="text-xs font-medium text-teal-500 uppercase tracking-wide mb-0.5">{label}</p>
+                      <p className="text-sm font-semibold text-slate-800">{value}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* AI-generated summary from document analysis */}
+              {aiSummary && (
+                <div>
+                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">AI Summary Report</p>
+                  <div className="bg-teal-50 border border-teal-200 rounded-lg p-4">
+                    <div className="flex items-start gap-2">
+                      <Activity className="w-4 h-4 text-teal-600 flex-shrink-0 mt-0.5" />
+                      <p className="text-sm text-slate-700 leading-relaxed">{aiSummary}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Vitals & lab results from documents */}
+              {vitalsEntries.length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Vitals &amp; Lab Results</p>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                    {vitalsEntries.map(([key, val]) => (
+                      <div key={key} className="bg-white rounded-lg border border-teal-100 px-3 py-2.5 shadow-xs">
+                        <p className="text-xs font-medium text-teal-500 uppercase tracking-wide mb-0.5">{formatKey(key)}</p>
+                        <p className="text-sm font-semibold text-slate-800">{formatValue(val)}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Other extracted details */}
+              {otherEntries.filter(([k]) => k !== "summary").length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Additional Details</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {otherEntries
+                      .filter(([k]) => k !== "summary")
+                      .map(([key, val]) => (
+                        <div key={key} className="bg-white rounded-lg border border-slate-100 px-3 py-2.5">
+                          <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-0.5">{formatKey(key)}</p>
+                          <p className="text-sm text-slate-800">{formatValue(val)}</p>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              )}
+
+              {!aiSummary && vitalsEntries.length === 0 && otherEntries.filter(([k]) => k !== "summary").length === 0 && (
+                <p className="text-xs text-slate-400 text-center py-2">
+                  Upload a medical document below to enrich your personalized details with AI-extracted data.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* ── Full Health Profile ───────────────────────────────────── */}
           <Card className="border-slate-200 shadow-sm">
             <CardContent className="pt-6 space-y-6">
               <div>
@@ -799,7 +894,7 @@ export default function ProfilePage() {
               </div>
 
               <div>
-                <SectionHeader icon={<Dumbbell className="w-4 h-4" />} title="Lifestyle & Goals" />
+                <SectionHeader icon={<Dumbbell className="w-4 h-4" />} title="Lifestyle &amp; Goals" />
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   <ViewField label="Sleep" value={profile?.sleepHours ? `${profile.sleepHours} hrs/night` : null} />
                   <ViewField label="Activity Level" value={profile?.activityLevel ? (activityLabels[profile.activityLevel] ?? profile.activityLevel) : null} />
@@ -809,48 +904,7 @@ export default function ProfilePage() {
             </CardContent>
           </Card>
 
-          {vitalsEntries.length > 0 && (
-            <Card className="border-teal-200 shadow-sm bg-gradient-to-br from-teal-50/60 to-white">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center gap-2 text-teal-800">
-                  <Activity className="w-4 h-4 text-teal-600" />Health Vitals
-                </CardTitle>
-                <CardDescription className="text-xs text-teal-600">Recorded from medical documents and checkups</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                  {vitalsEntries.map(([key, val]) => (
-                    <div key={key} className="bg-white rounded-lg border border-teal-100 px-3 py-2.5 shadow-xs">
-                      <p className="text-xs font-medium text-teal-500 uppercase tracking-wide mb-0.5">{formatKey(key)}</p>
-                      <p className="text-sm font-semibold text-slate-800">{formatValue(val)}</p>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {otherEntries.length > 0 && (
-            <Card className="border-indigo-100 shadow-sm bg-indigo-50/20">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center gap-2 text-indigo-800">
-                  <Sparkles className="w-4 h-4 text-indigo-500" />Personalized Health Data
-                </CardTitle>
-                <CardDescription className="text-xs text-indigo-600">Additional details from documents and health history</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {otherEntries.map(([key, val]) => (
-                    <div key={key} className="bg-white rounded-lg border border-indigo-100 px-3 py-2.5">
-                      <p className="text-xs font-medium text-indigo-400 uppercase tracking-wide mb-0.5">{formatKey(key)}</p>
-                      <p className="text-sm text-slate-800">{formatValue(val)}</p>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
+          {/* ── Medical Documents ─────────────────────────────────────── */}
           <Card className="border-slate-200 shadow-sm">
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2"><Upload className="w-4 h-4 text-teal-600" />Medical Documents</CardTitle>
