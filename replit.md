@@ -17,7 +17,7 @@ A full-stack AI health companion that helps users understand symptoms, track per
 - Frontend: React + Vite + Tailwind v4 + shadcn/ui + wouter + Clerk auth
 - API: Express 5 with SSE streaming for AI chat
 - DB: PostgreSQL + Drizzle ORM
-- AI: OpenAI gpt-4o-mini (direct SDK, streaming)
+- AI: OpenAI gpt-4o-mini (direct SDK, streaming) — primary; GEMINI_API_KEY falls back to Gemini 2.5 Flash if set instead
 - Auth: Clerk (whitelabel proxy via `/api/__clerk`)
 - Validation: Zod (`zod/v4`), Orval-generated client hooks
 - Build: esbuild (CJS bundle)
