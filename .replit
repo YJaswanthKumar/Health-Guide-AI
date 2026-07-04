@@ -79,4 +79,3 @@ channel = "stable-25_05"
 
 [userenv.shared]
 BASE_PATH = "/"
-VITE_CLERK_PROXY_URL = "/api/__clerk"
