@@ -65,8 +65,12 @@ router.delete("/conversations/:id", async (req, res) => {
   const id = Number(req.params.id);
   if (isNaN(id)) return res.status(400).json({ error: "Invalid id" });
   try {
-    await db.delete(messages).where(eq(messages.conversationId, id));
-    await db.delete(conversations).where(and(eq(conversations.id, id), eq(conversations.clerkUserId, userId)));
+    // Verify ownership before any deletion; messages cascade via FK
+    const deleted = await db
+      .delete(conversations)
+      .where(and(eq(conversations.id, id), eq(conversations.clerkUserId, userId)))
+      .returning({ id: conversations.id });
+    if (!deleted.length) return res.status(404).json({ error: "Conversation not found" });
     return res.status(204).send();
   } catch (err) {
     logger.error({ err }, "Failed to delete conversation");
@@ -106,6 +110,12 @@ router.get("/conversations/:id/messages", async (req, res) => {
   const params = GetConversationMessagesParams.safeParse({ id: Number(req.params.id) });
   if (!params.success) return res.status(400).json({ error: "Invalid id" });
   try {
+    // Verify conversation ownership before returning messages
+    const convoRows = await db
+      .select({ id: conversations.id })
+      .from(conversations)
+      .where(and(eq(conversations.id, params.data.id), eq(conversations.clerkUserId, userId)));
+    if (!convoRows.length) return res.status(404).json({ error: "Conversation not found" });
     const msgs = await db.select().from(messages).where(eq(messages.conversationId, params.data.id));
     return res.json(msgs);
   } catch (err) {
