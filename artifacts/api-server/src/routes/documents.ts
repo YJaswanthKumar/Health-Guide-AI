@@ -112,7 +112,23 @@ async function applyDocumentToProfile(
 
     const raw = response.text ?? "{}";
     const jsonStr = raw.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-    const updates: Record<string, unknown> = JSON.parse(jsonStr);
+
+    let updates: Record<string, unknown>;
+    try {
+      updates = JSON.parse(jsonStr);
+    } catch {
+      // AI returned truncated or malformed JSON — attempt to recover by
+      // finding the last complete top-level key-value pair and closing the object.
+      const lastComma = jsonStr.lastIndexOf(",");
+      const truncated = lastComma > 0 ? jsonStr.slice(0, lastComma) + "}" : "{}";
+      try {
+        updates = JSON.parse(truncated);
+        logger.warn("Merge response JSON was truncated; parsed partial result");
+      } catch {
+        logger.warn("Merge response JSON could not be parsed at all; skipping profile update");
+        return { updated: false, reason: "Profile merge skipped — AI returned invalid JSON", changes: [] };
+      }
+    }
 
     if (!updates || Object.keys(updates).length === 0) {
       return { updated: false, reason: "No profile changes needed from this document", changes: [] };

@@ -62,7 +62,15 @@ function formatKey(key: string) {
 }
 
 function formatValue(val: unknown): string {
-  if (Array.isArray(val)) return (val as unknown[]).map(v => typeof v === "object" ? JSON.stringify(v) : String(v)).join(", ");
+  if (Array.isArray(val)) {
+    return (val as unknown[]).map(v => {
+      if (typeof v === "object" && v !== null) {
+        // e.g. medication objects {name, dosage, frequency} → "Metformin 500mg twice daily"
+        return Object.values(v as Record<string, unknown>).filter(Boolean).join(" ");
+      }
+      return String(v);
+    }).join(", ");
+  }
   if (typeof val === "object" && val !== null) return JSON.stringify(val);
   return String(val);
 }
@@ -569,15 +577,42 @@ export default function ProfilePage() {
     return null;
   })();
 
-  // All AI-extracted entries from user's own documents (everything except the summary field)
-  const extractedEntries: [string, unknown][] = parsedAdditional
-    ? Object.entries(parsedAdditional).filter(([k, v]) => k !== "summary" && v !== null && v !== undefined && v !== "")
-    : [];
+  // Fields already shown in Basic Information — skip to avoid duplication
+  const BASIC_FIELDS = new Set([
+    "patientname", "name", "age", "gender", "bloodgroup", "height", "weight",
+    "location", "reportdate", "summary", "notes",
+  ]);
+
+  // All AI-extracted entries, flattened and deduplicated against basic info
+  const extractedEntries: [string, unknown][] = (() => {
+    if (!parsedAdditional) return [];
+    const entries: [string, unknown][] = [];
+    for (const [k, v] of Object.entries(parsedAdditional)) {
+      const norm = k.toLowerCase().replace(/[^a-z]/g, "");
+      if (BASIC_FIELDS.has(norm)) continue;
+      if (v === null || v === undefined || v === "") continue;
+      // Flatten nested objects (e.g. testResults: {hemoglobin: "12.5 g/dL", …})
+      if (!Array.isArray(v) && typeof v === "object" && v !== null) {
+        for (const [sk, sv] of Object.entries(v as Record<string, unknown>)) {
+          if (sv !== null && sv !== undefined && sv !== "") entries.push([sk, sv]);
+        }
+      } else {
+        entries.push([k, v]);
+      }
+    }
+    return entries;
+  })();
 
   const conditions: string[] = profile?.medicalConditions?.split(",").map((s: string) => s.trim()).filter((s: string) => s.length > 0) ?? [];
+
+  // Blend document summary + notes into one block
   const aiSummary: string | null = (() => {
     const s = parsedAdditional?.summary;
-    return typeof s === "string" && s.length > 0 ? s : null;
+    const n = parsedAdditional?.notes;
+    const summary = typeof s === "string" && s.length > 0 ? s.trim() : null;
+    const notes   = typeof n === "string" && n.length > 0 ? n.trim() : null;
+    if (summary && notes) return `${summary}\n\n${notes}`;
+    return summary ?? notes ?? null;
   })();
   const activityLabels: Record<string, string> = {
     sedentary: "Sedentary", light: "Lightly Active", moderate: "Moderately Active",
