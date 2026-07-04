@@ -3,11 +3,11 @@ name: Chat AI provider
 description: Which AI SDK powers the chat routes and why it was switched
 ---
 
-The chat route (`artifacts/api-server/src/routes/chat.ts`) was migrated from Google Gemini (`@google/genai`) to OpenAI (`openai` package, GPT-4o-mini) because the user did not have a `GEMINI_API_KEY` but did have `OPENAI_API_KEY`.
+The chat route (`artifacts/api-server/src/routes/chat.ts`) uses **Google Gemini 2.5 Flash** via `@google/genai` with `GEMINI_API_KEY`. Role mapping: `assistant` → `model` for Gemini's content format.
 
-**Why:** Gemini SDK is still a devDependency in `artifacts/api-server/package.json` but is no longer imported in chat.ts. If switching back to Gemini, restore the `getAI()` factory and the `generateContentStream` call pattern (role mapping: `assistant` → `model`).
+**Why:** User has both GEMINI_API_KEY and OPENAI_API_KEY. Gemini is the primary AI for all chat modes (checkup, planner, education). OpenAI is available in `lib/integrations-openai-ai-server` for document extraction but requires `AI_INTEGRATIONS_OPENAI_BASE_URL` — use the `openai` package directly with `OPENAI_API_KEY` for any new OpenAI features.
 
-**How to apply:** When adding new AI features, use `new OpenAI({ apiKey: process.env.OPENAI_API_KEY })` directly in the route file. Do not use `lib/integrations-openai-ai-server` — it requires `AI_INTEGRATIONS_OPENAI_BASE_URL` which is not set.
+**How to apply:** When adding new AI chat features, extend the existing `getAI()` factory in chat.ts. For new OpenAI features, instantiate `new OpenAI({ apiKey: process.env.OPENAI_API_KEY })` directly — do NOT use `lib/integrations-openai-ai-server`.
 
 **Security fixes also applied in this file:**
 - `GET /chat/conversations/:id/messages` — now verifies conversation ownership before returning messages (prevents IDOR)

@@ -3,22 +3,25 @@ import { getAuth } from "@clerk/express";
 import { db, conversations, messages, userProfilesTable, medicalDocumentsTable } from "@workspace/db";
 import { eq, and, desc } from "drizzle-orm";
 import { CreateConversationBody, SendMessageBody, GetConversationMessagesParams } from "@workspace/api-zod";
-import OpenAI from "openai";
+import { GoogleGenAI } from "@google/genai";
 import { logger } from "../lib/logger";
 
 const router = Router();
 
-let _ai: OpenAI | null = null;
-function getAI(): OpenAI {
+let _ai: GoogleGenAI | null = null;
+function getAI(): GoogleGenAI {
   if (!_ai) {
     const apiKey =
-      process.env.AI_INTEGRATIONS_OPENAI_API_KEY ||
-      process.env.OPENAI_API_KEY;
+      process.env.AI_INTEGRATIONS_GEMINI_API_KEY ||
+      process.env.GEMINI_API_KEY ||
+      process.env.GOOGLE_API_KEY;
     if (!apiKey) {
-      throw new Error("No OpenAI API key configured. Please add OPENAI_API_KEY to your secrets.");
+      throw new Error("No Gemini API key configured. Please add GEMINI_API_KEY to your secrets.");
     }
-    const baseURL = process.env.AI_INTEGRATIONS_OPENAI_BASE_URL || undefined;
-    _ai = new OpenAI({ apiKey, ...(baseURL ? { baseURL } : {}) });
+    const baseUrl = process.env.AI_INTEGRATIONS_GEMINI_BASE_URL;
+    _ai = baseUrl
+      ? new GoogleGenAI({ apiKey, httpOptions: { apiVersion: "", baseUrl } })
+      : new GoogleGenAI({ apiKey });
   }
   return _ai;
 }
@@ -184,13 +187,10 @@ Goals: ${profile.goals ?? "none"} | Location: ${profile.location ?? "unknown"}`;
       }
     }
 
-    const chatMessages: OpenAI.Chat.ChatCompletionMessageParam[] = [
-      { role: "system", content: systemPrompt },
-      ...historyRows.slice(-20).map((m) => ({
-        role: m.role as "user" | "assistant",
-        content: m.content,
-      })),
-    ];
+    const chatContents = historyRows.slice(-20).map((m) => ({
+      role: m.role === "assistant" ? "model" : "user",
+      parts: [{ text: m.content }],
+    }));
 
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");
@@ -198,15 +198,17 @@ Goals: ${profile.goals ?? "none"} | Location: ${profile.location ?? "unknown"}`;
 
     let fullResponse = "";
 
-    const stream = await getAI().chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: chatMessages,
-      max_tokens: 2048,
-      stream: true,
+    const stream = await getAI().models.generateContentStream({
+      model: "gemini-2.5-flash",
+      contents: chatContents,
+      config: {
+        systemInstruction: systemPrompt,
+        maxOutputTokens: 2048,
+      },
     });
 
     for await (const chunk of stream) {
-      const text = chunk.choices[0]?.delta?.content ?? "";
+      const text = chunk.text;
       if (text) {
         fullResponse += text;
         res.write(`data: ${JSON.stringify({ content: text })}\n\n`);
@@ -223,12 +225,14 @@ Goals: ${profile.goals ?? "none"} | Location: ${profile.location ?? "unknown"}`;
     let userMessage = "Something went wrong. Please try again.";
     const msg: string = err?.message ?? "";
 
-    if (msg.includes("invalid_api_key") || msg.toLowerCase().includes("api key not valid") || msg.includes("Incorrect API key")) {
-      userMessage = "Invalid OpenAI API key. Please check your OPENAI_API_KEY secret.";
-    } else if (msg.includes("insufficient_quota") || msg.includes("quota") || msg.includes("429")) {
-      userMessage = "OpenAI quota exceeded. Please check your OpenAI billing or wait before retrying.";
-    } else if (msg.includes("No OpenAI API key")) {
-      userMessage = "No OpenAI API key configured. Please add OPENAI_API_KEY to your secrets.";
+    if (msg.includes("API_KEY_INVALID") || msg.includes("invalid api key") || msg.toLowerCase().includes("api key not valid")) {
+      userMessage = "Invalid Gemini API key. Please check your GEMINI_API_KEY secret.";
+    } else if (msg.includes("RESOURCE_EXHAUSTED") || msg.includes("quota") || msg.includes("429")) {
+      userMessage = "Gemini API quota exceeded. Please check your Google AI billing or wait before retrying.";
+    } else if (msg.includes("PERMISSION_DENIED")) {
+      userMessage = "Gemini API key does not have permission. Ensure the Gemini API is enabled in your Google Cloud project.";
+    } else if (msg.includes("No Gemini API key")) {
+      userMessage = "No Gemini API key configured. Please add GEMINI_API_KEY to your secrets.";
     }
 
     if (!res.headersSent) {

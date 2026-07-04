@@ -2,7 +2,7 @@
 
 > Your trusted AI-powered health companion — understand symptoms, track care plans, and learn about nutrition and wellness.
 
-VitalGuide is a full-stack, personalized health management app powered by OpenAI GPT-4o-mini. Users complete a health profile on onboarding, which is injected into every AI conversation for truly personalized responses.
+VitalGuide is a full-stack, personalized health management app powered by Google Gemini 2.5 Flash. Users complete a health profile on onboarding, which is injected into every AI conversation for truly personalized responses.
 
 ---
 
@@ -156,7 +156,7 @@ Backend (chat.ts)
   ├─ Load recent medical documents (checkup mode only)
   ├─ Build system prompt:
   │     [mode prompt] + [health profile] + [document summaries]
-  ├─ Call OpenAI GPT-4o-mini (chat.completions.create with stream: true)
+  ├─ Call Google Gemini 2.5 Flash (generateContentStream)
   │
   └─ Stream SSE chunks:
         data: {"content": "..."}   ← per token
@@ -233,8 +233,8 @@ Copy `.env.example` to `.env` and fill in the values. On Replit, add secrets via
 | `DATABASE_URL` | ✅ Auto (Replit) | PostgreSQL connection string — injected automatically by Replit |
 | `CLERK_PUBLISHABLE_KEY` | ✅ | Clerk publishable key (`pk_...`) |
 | `CLERK_SECRET_KEY` | ✅ | Clerk secret key (`sk_...`) |
-| `OPENAI_API_KEY` | ✅ | OpenAI API key — powers all AI chat features (GPT-4o-mini) |
-| `GEMINI_API_KEY` | ⚠️ Optional | Google Gemini key — alternative AI backend |
+| `GEMINI_API_KEY` | ✅ | Google Gemini API key — powers all AI chat features (Gemini 2.5 Flash) |
+| `OPENAI_API_KEY` | ⚠️ Optional | OpenAI key — used for document extraction and media utilities |
 | `SESSION_SECRET` | ✅ | Random secret string for session signing |
 | `PORT` | ✅ | Port for each server (8080 for API, 5000 for frontend) |
 | `BASE_PATH` | ✅ | URL base path — use `/` for local dev |
