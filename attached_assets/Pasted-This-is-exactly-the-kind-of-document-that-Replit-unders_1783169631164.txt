@@ -1,0 +1,810 @@
+This is exactly the kind of document that Replit understands well. Below is a comprehensive architecture description you can paste into Replit so it understands your project, every AI agent, why they exist, how they communicate, and what inputs/outputs they expect.
+
+---
+
+# NutriWise AI - Complete Project Architecture & AI Agent Specification
+
+## 1. Project Overview
+
+### Project Name
+
+**NutriWise AI – Intelligent Health, Nutrition & Wellness Platform**
+
+### Vision
+
+NutriWise AI is not simply an AI chatbot. It is an intelligent personal healthcare companion that assists users throughout their health journey.
+
+The system combines:
+
+* Health assessment
+* Medical report analysis
+* Personalized nutrition
+* Care planning
+* Emergency assistance
+
+into one integrated AI ecosystem.
+
+Unlike traditional chatbots that simply answer questions, NutriWise AI continuously understands the user's medical condition, lifestyle, nutrition, medications, recovery progress, daily habits, and historical data to provide personalized recommendations.
+
+The website serves as the user interface and workflow orchestrator.
+
+CrewAI serves as the AI reasoning engine.
+
+---
+
+# Core Philosophy
+
+The website should NEVER contain medical reasoning.
+
+Instead:
+
+Frontend
+
+↓
+
+Backend
+
+↓
+
+Agent Router
+
+↓
+
+CrewAI Agent
+
+↓
+
+Structured JSON Response
+
+↓
+
+Backend
+
+↓
+
+Database
+
+↓
+
+Frontend
+
+The website only collects information and displays results.
+
+All intelligent reasoning happens inside CrewAI.
+
+---
+
+# Overall System Architecture
+
+```
+React Frontend
+
+        │
+
+        ▼
+
+Express Backend
+
+        │
+
+        ▼
+
+Agent Router
+
+        │
+
+ ┌──────────────┬──────────────┬───────────────┐
+
+ ▼              ▼              ▼
+
+Agent1      Agent2       Agent3
+
+Medical     Health       Care Planner
+
+Report      Assessment
+
+        │
+
+        ▼
+
+Agent5 Nutrition RAG
+
+        │
+
+        ▼
+
+Agent4 Emergency
+
+```
+
+The backend decides which agent should execute.
+
+Agents never communicate directly.
+
+They communicate through structured outputs handled by the backend.
+
+---
+
+# Why Multiple AI Agents?
+
+Instead of one huge prompt, responsibilities are separated.
+
+Benefits:
+
+* Easier maintenance
+* Independent testing
+* Better accuracy
+* Easier upgrades
+* Lower prompt complexity
+* Easier debugging
+* Future scalability
+
+---
+
+# Agent Communication
+
+Every agent follows the same rule.
+
+INPUT
+
+↓
+
+Reasoning
+
+↓
+
+OUTPUT JSON
+
+↓
+
+Backend
+
+↓
+
+Next Agent
+
+No agent should directly call another agent.
+
+The backend orchestrates everything.
+
+---
+
+# Standard Input Format
+
+Every agent receives JSON.
+
+Example
+
+```json
+{
+   "user_profile":{},
+   "conversation_history":[],
+   "daily_logs":[],
+   "current_plan":{},
+   "medical_conditions":[]
+}
+```
+
+No plain text communication between agents.
+
+---
+
+# Standard Output Format
+
+Every agent returns structured JSON.
+
+Example
+
+```json
+{
+   "status":"success",
+
+   "summary":"...",
+
+   "recommendations":[],
+
+   "warnings":[],
+
+   "next_agents":[],
+
+   "backend_actions":[]
+
+}
+```
+
+This makes every agent interchangeable.
+
+---
+
+# Agent 1
+
+# Medical Report Intelligence Agent
+
+## Purpose
+
+This agent understands medical reports.
+
+It converts
+
+PDF
+
+Images
+
+Lab Reports
+
+Blood Reports
+
+Hospital Reports
+
+into structured medical information.
+
+---
+
+## Why Designed?
+
+Most patients cannot understand
+
+Blood Reports
+
+CBC
+
+HbA1c
+
+Lipid Profile
+
+Kidney Tests
+
+Liver Tests
+
+Urine Reports
+
+Medical terminology
+
+This agent extracts everything.
+
+---
+
+## Responsibilities
+
+OCR
+
+PDF Parsing
+
+Medical Parameter Extraction
+
+Trend Analysis
+
+Abnormal Value Detection
+
+Medical Summary
+
+Profile Suggestions
+
+Severity Classification
+
+Nutrition Trigger
+
+Emergency Trigger
+
+---
+
+## Inputs
+
+```json
+{
+   "document_type":"pdf",
+
+   "document_path":"uploads/report.pdf",
+
+   "user_profile":{},
+
+   "previous_reports":[],
+
+   "conversation_history":[],
+
+   "symptom_input":""
+}
+```
+
+---
+
+## Output
+
+```json
+{
+   "workflow":"document",
+
+   "medical_parameters":[],
+
+   "abnormalities":[],
+
+   "summary":"",
+
+   "severity":"Moderate",
+
+   "foods_to_eat":[],
+
+   "foods_to_avoid":[],
+
+   "profile_updates":{},
+
+   "next_agents":[
+      "care_planner",
+      "nutrition"
+   ]
+}
+```
+
+---
+
+## Triggers
+
+Medical Report Upload
+
+Image Upload
+
+Hospital Report Upload
+
+---
+
+# Agent 2
+
+# Conversational Health Assessment Agent
+
+Purpose
+
+Simulates a healthcare professional interviewing the patient.
+
+Instead of immediately giving answers,
+
+it asks
+
+follow-up questions
+
+until enough information is gathered.
+
+---
+
+## Responsibilities
+
+Conversation Memory
+
+Follow-up Questions
+
+Symptom Analysis
+
+Recovery Suggestions
+
+Medication Guidance
+
+Nutrition Suggestions
+
+Doctor Recommendation
+
+Profile Update
+
+---
+
+## Inputs
+
+```json
+{
+   "user_message":"",
+
+   "conversation_history":[],
+
+   "user_profile":{},
+
+   "user_id":"",
+
+   "symptoms_belong_to_user":"pending"
+}
+```
+
+---
+
+## Output
+
+```json
+{
+   "assessment":"",
+
+   "possible_conditions":[],
+
+   "doctor_recommendation":{},
+
+   "food_recommendations":[],
+
+   "warning_signs":[],
+
+   "profile_patch":{},
+
+   "next_agents":[
+      "care_planner",
+      "nutrition"
+   ]
+}
+```
+
+---
+
+## Triggers
+
+Chat
+
+Voice
+
+Symptom Input
+
+---
+
+# Agent 3
+
+# Intelligent Care Planner
+
+Purpose
+
+Acts as the user's AI healthcare manager.
+
+Not just reminders.
+
+Creates
+
+daily
+
+weekly
+
+monthly
+
+adaptive healthcare plans.
+
+---
+
+## Responsibilities
+
+Daily Plans
+
+Medication Schedule
+
+Exercise
+
+Meals
+
+Water Intake
+
+Recovery Mode
+
+Notifications
+
+Compliance
+
+Habit Prediction
+
+Progress
+
+Goal Tracking
+
+---
+
+## Inputs
+
+```json
+{
+   "user_profile":{},
+   "health_assessment":{},
+   "nutrition_plan":{},
+   "daily_logs":[],
+   "current_tasks":[],
+   "calendar":{},
+   "medical_conditions":[],
+   "health_goals":[]
+}
+```
+
+---
+
+## Output
+
+```json
+{
+   "care_plan":{},
+   "tasks":[],
+   "notifications":[],
+   "wellness_score":85,
+   "health_score":81,
+   "risk_predictions":[],
+   "recommend_emergency":false
+}
+```
+
+---
+
+## Triggers
+
+Health Assessment Complete
+
+Nutrition Plan Updated
+
+Medical Report Updated
+
+Daily Log Updated
+
+---
+
+# Agent 4
+
+# Emergency Navigator
+
+Purpose
+
+Handles emergencies.
+
+It NEVER diagnoses.
+
+It only assists.
+
+---
+
+## Responsibilities
+
+Emergency Triage
+
+First Aid
+
+Hospital Search
+
+Doctor Search
+
+Ambulance Suggestions
+
+Emergency Contacts
+
+Email Payload
+
+SMS Payload
+
+Emergency Dashboard
+
+---
+
+## Inputs
+
+```json
+{
+   "user_name":"",
+
+   "user_location":"",
+
+   "medical_history":{},
+
+   "emergency_details":"",
+
+   "emergency_contacts":[]
+}
+```
+
+---
+
+## Output
+
+```json
+{
+   "severity":"Critical",
+
+   "priority":98,
+
+   "first_aid":[],
+
+   "recommended_hospitals":[],
+
+   "email_payload":{},
+
+   "sms_payload":{},
+
+   "dashboard_alert":{},
+
+   "backend_actions":[
+      "SEND_EMAIL",
+      "SEND_SMS"
+   ]
+}
+```
+
+---
+
+## Triggers
+
+Agent1
+
+Agent2
+
+Emergency Button
+
+---
+
+# Agent 5
+
+# Nutrition Intelligence (RAG)
+
+Purpose
+
+Provides evidence-based nutrition.
+
+Never answers from LLM memory.
+
+Always retrieves from medical documents.
+
+---
+
+## Knowledge Base
+
+WHO
+
+CDC
+
+NIH
+
+ICMR
+
+NIN
+
+Hospital Diet PDFs
+
+User Diet Charts
+
+Uploaded Reports
+
+---
+
+## Responsibilities
+
+Food Guidance
+
+Meal Planning
+
+Nutrition Education
+
+Food Safety
+
+Disease Diets
+
+Food Drug Interaction
+
+Micronutrients
+
+Meal Optimization
+
+---
+
+## Inputs
+
+```json
+{
+   "question":"",
+
+   "user_profile":{},
+
+   "medical_conditions":[],
+
+   "allergies":[],
+
+   "current_medications":[],
+
+   "recent_food_logs":[],
+
+   "health_assessment":{}
+}
+```
+
+---
+
+## Output
+
+```json
+{
+   "answer":"",
+
+   "foods_to_eat":[],
+
+   "foods_to_avoid":[],
+
+   "meal_plan":{},
+
+   "warnings":[],
+
+   "citations":[],
+
+   "confidence":0.95
+}
+```
+
+---
+
+# Backend Responsibilities
+
+The backend is the brain of the application.
+
+It should:
+
+* Authenticate users
+* Store data
+* Route requests to CrewAI
+* Execute backend actions (email, SMS, DB writes)
+* Merge responses
+* Cache results
+* Stream AI responses
+* Handle retries and errors
+
+It **must not** perform medical reasoning.
+
+---
+
+# Frontend Responsibilities
+
+The frontend should:
+
+* Collect user input
+* Upload files
+* Display AI responses
+* Render dashboards
+* Show charts and notifications
+* Maintain session state
+* Never contain business logic
+
+---
+
+# Database Responsibilities
+
+Store:
+
+* User Profile
+* Medical History
+* Reports
+* Daily Logs
+* Care Plans
+* Nutrition Plans
+* Notifications
+* Emergency Events
+* Conversation History
+* Health Scores
+* Compliance Reports
+
+The database stores facts—not AI reasoning.
+
+---
+
+# Agent Workflow Examples
+
+### Medical Report Upload
+
+1. User uploads PDF.
+2. Backend stores the file.
+3. Agent 1 extracts and analyzes the report.
+4. Backend saves structured data.
+5. If nutrition changes are needed, Agent 5 is called.
+6. If the care plan changes, Agent 3 is called.
+7. If a critical condition is detected, Agent 4 is called.
+8. Dashboard updates automatically.
+
+### Symptom Chat
+
+1. User describes symptoms.
+2. Agent 2 asks follow-up questions until enough information is gathered.
+3. Agent 2 produces an assessment.
+4. Backend updates the profile only after user confirmation.
+5. Agent 3 updates the care plan.
+6. Agent 5 generates personalized nutrition advice.
+7. Agent 4 is triggered only if the severity is high.
+
+---
+
+# Design Principles
+
+* **Single Responsibility:** Each agent has one clear purpose.
+* **Backend Orchestration:** Agents never call each other directly.
+* **Structured Communication:** All interactions use JSON.
+* **Human-in-the-Loop:** Profile updates and irreversible actions require confirmation.
+* **Evidence-Based:** Nutrition advice is grounded in retrieved documents (RAG), not model memory.
+* **Safety First:** Emergency and medical recommendations are cautious, non-diagnostic, and designed to support—not replace—professional medical care.
+
+This specification gives Replit a clear understanding of the project's intent, architecture, data flow, and each agent's role so it can integrate your CrewAI agents into the existing website in a structured, maintainable way.
