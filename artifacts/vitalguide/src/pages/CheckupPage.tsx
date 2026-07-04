@@ -231,8 +231,10 @@ export default function CheckupPage() {
     const params = new URLSearchParams(window.location.search);
     const prompt = params.get("prompt");
     if (prompt) {
-      const decoded = decodeURIComponent(prompt);
-      setPendingPrompt(decoded);
+      // URLSearchParams.get() already decodes percent-encoding once.
+      // Calling decodeURIComponent() again would double-decode and crash on
+      // strings that contain a literal "%" (e.g. "95% saturation").
+      setPendingPrompt(prompt);
       window.history.replaceState({}, "", "/checkup");
       createConversation.mutate(
         { data: { title: `Document Analysis — ${new Date().toLocaleDateString()}`, mode: "checkup" } },
