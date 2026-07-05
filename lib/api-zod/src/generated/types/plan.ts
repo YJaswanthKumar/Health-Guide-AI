@@ -13,6 +13,22 @@ export interface Plan {
   /** @nullable */
   description?: string | null;
   status: string;
+  /** @nullable */
+  startDate?: string | null;
+  /** @nullable */
+  endDate?: string | null;
+  /** @nullable */
+  durationDays?: number | null;
+  /**
+     * Computed progress percentage (0-100) based on elapsed time between startDate and endDate, or plan status.
+     * @nullable
+     */
+  progress?: number | null;
+  /**
+     * Computed days remaining until endDate (negative if overdue).
+     * @nullable
+     */
+  daysRemaining?: number | null;
   createdAt: string;
   updatedAt?: string;
 }

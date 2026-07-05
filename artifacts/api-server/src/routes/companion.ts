@@ -3,6 +3,7 @@ import { getAuth } from "@clerk/express";
 import { db, companionMessagesTable, tasksTable, userProfilesTable, dailyLogsTable } from "@workspace/db";
 import { eq, desc } from "drizzle-orm";
 import { logger } from "../lib/logger";
+import { applyPlanActions } from "../lib/planActions";
 import {
   invokeAgent,
   buildCarePlannerInput,
@@ -67,7 +68,7 @@ router.post("/message", async (req, res) => {
       .select()
       .from(dailyLogsTable)
       .where(eq(dailyLogsTable.clerkUserId, userId))
-      .orderBy(desc(dailyLogsTable.date))
+      .orderBy(desc(dailyLogsTable.logDate))
       .limit(7);
 
     const history = await db
@@ -117,6 +118,7 @@ router.post("/message", async (req, res) => {
           });
         }
       }
+      await applyPlanActions(actions, userId);
 
       for (const task of agentOutput?.today_tasks ?? []) {
         await db.insert(tasksTable).values({
@@ -172,7 +174,7 @@ router.post("/proactive", async (req, res) => {
       .select()
       .from(dailyLogsTable)
       .where(eq(dailyLogsTable.clerkUserId, userId))
-      .orderBy(desc(dailyLogsTable.date))
+      .orderBy(desc(dailyLogsTable.logDate))
       .limit(3);
 
     const input = buildCarePlannerInput({
@@ -211,6 +213,7 @@ router.post("/proactive", async (req, res) => {
           });
         }
       }
+      await applyPlanActions(actions, userId);
     } catch (agentErr) {
       logger.warn({ agentErr }, "Agent proactive failed, using fallback");
     }

@@ -90,6 +90,11 @@ export const ListPlansResponseItem = zod.object({
   "type": zod.string(),
   "description": zod.string().nullish(),
   "status": zod.string(),
+  "startDate": zod.string().nullish(),
+  "endDate": zod.string().nullish(),
+  "durationDays": zod.number().nullish(),
+  "progress": zod.number().nullish().describe('Computed progress percentage (0-100) based on elapsed time between startDate and endDate, or plan status.'),
+  "daysRemaining": zod.number().nullish().describe('Computed days remaining until endDate (negative if overdue).'),
   "createdAt": zod.string(),
   "updatedAt": zod.string().optional()
 })
@@ -102,7 +107,9 @@ export const ListPlansResponse = zod.array(ListPlansResponseItem)
 export const CreatePlanBody = zod.object({
   "title": zod.string(),
   "type": zod.string(),
-  "description": zod.string().optional()
+  "description": zod.string().optional(),
+  "startDate": zod.string().optional(),
+  "endDate": zod.string().optional()
 })
 
 
@@ -119,6 +126,11 @@ export const GetPlanResponse = zod.object({
   "type": zod.string(),
   "description": zod.string().nullish(),
   "status": zod.string(),
+  "startDate": zod.string().nullish(),
+  "endDate": zod.string().nullish(),
+  "durationDays": zod.number().nullish(),
+  "progress": zod.number().nullish().describe('Computed progress percentage (0-100) based on elapsed time between startDate and endDate, or plan status.'),
+  "daysRemaining": zod.number().nullish().describe('Computed days remaining until endDate (negative if overdue).'),
   "createdAt": zod.string(),
   "updatedAt": zod.string().optional()
 })
@@ -134,7 +146,9 @@ export const UpdatePlanParams = zod.object({
 export const UpdatePlanBody = zod.object({
   "title": zod.string().optional(),
   "status": zod.string().optional(),
-  "description": zod.string().optional()
+  "description": zod.string().optional(),
+  "startDate": zod.string().optional(),
+  "endDate": zod.string().optional()
 })
 
 export const UpdatePlanResponse = zod.object({
@@ -143,6 +157,11 @@ export const UpdatePlanResponse = zod.object({
   "type": zod.string(),
   "description": zod.string().nullish(),
   "status": zod.string(),
+  "startDate": zod.string().nullish(),
+  "endDate": zod.string().nullish(),
+  "durationDays": zod.number().nullish(),
+  "progress": zod.number().nullish().describe('Computed progress percentage (0-100) based on elapsed time between startDate and endDate, or plan status.'),
+  "daysRemaining": zod.number().nullish().describe('Computed days remaining until endDate (negative if overdue).'),
   "createdAt": zod.string(),
   "updatedAt": zod.string().optional()
 })

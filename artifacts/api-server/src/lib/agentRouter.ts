@@ -117,6 +117,7 @@ export function buildCarePlannerInput(opts: {
   conversationHistory?: unknown[];
   healthAssessment?: Record<string, unknown>;
   nutritionPlan?: Record<string, unknown>;
+  currentPlans?: unknown[];
 }) {
   return {
     user_profile: opts.userProfile,
@@ -126,6 +127,7 @@ export function buildCarePlannerInput(opts: {
     current_medications: opts.currentMedications,
     daily_logs: opts.dailyLogs,
     current_tasks: opts.currentTasks,
+    current_plans: opts.currentPlans ?? [],
     previous_progress: [],
     calendar: {},
     recovery_status: {},
@@ -147,6 +149,16 @@ export type AgentTaskOutput = {
   completed?: boolean;
 };
 
+export type AgentPlanOutput = {
+  id?: string | number;
+  title: string;
+  type?: string;
+  description?: string;
+  status?: string;
+  start_date?: string;
+  end_date?: string;
+};
+
 export type AgentCarePlannerOutput = {
   care_plan?: Record<string, unknown>;
   today_tasks?: AgentTaskOutput[];
@@ -154,6 +166,8 @@ export type AgentCarePlannerOutput = {
     action: string;
     task?: AgentTaskOutput;
     task_id?: string | number;
+    plan?: AgentPlanOutput;
+    plan_id?: string | number;
     message?: string;
     data?: Record<string, unknown>;
   }>;

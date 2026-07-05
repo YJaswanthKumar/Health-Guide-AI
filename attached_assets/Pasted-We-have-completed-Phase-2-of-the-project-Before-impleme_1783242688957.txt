@@ -1,0 +1,335 @@
+We have completed Phase 2 of the project. Before implementing any new features, read README.md and PROGRESS.md to understand the current architecture and continue from the latest completed state.
+
+The application is already using the CrewAI multi-agent architecture. Do NOT redesign the architecture. Preserve the existing Agent Router, backend services, database schema wherever possible, and frontend layout. Only improve and complete the existing implementation.
+
+The following issues and enhancements must now be completed.
+
+=========================================================
+1. USER PROFILE & SIGNUP FLOW
+=========================================================
+
+The current signup flow is not functioning correctly.
+
+Issues:
+
+- After signup, when the user clicks "Complete Profile", the page becomes stuck and does not proceed.
+- Find the root cause and fix the complete profile workflow.
+- Ensure proper loading states, success handling, and error handling.
+
+Medical document upload during signup is also not working.
+
+Requirements:
+
+- The uploaded medical document must successfully upload.
+- Store document metadata in the database.
+- Associate the document with the correct user.
+- Verify the upload after saving.
+- Display upload success or failure messages.
+
+Persistence verification:
+
+After profile completion, verify that all profile information is actually stored in PostgreSQL.
+
+This includes:
+
+- personal information
+- medical conditions
+- allergies
+- medications
+- uploaded medical reports
+- emergency contacts
+- health goals
+- preferences
+
+After refreshing the page or logging out and signing back in, every piece of information must still be available.
+
+The frontend should always fetch the latest profile from the database instead of relying on temporary React state.
+
+=========================================================
+2. PLAN TRACKER REDESIGN
+=========================================================
+
+The current Plan Tracker behaves like a static list.
+
+I want it to become a real Action Plan Management System.
+
+Each plan should contain:
+
+- title
+- description
+- category
+- start date
+- end date OR duration
+- total number of days
+- current day
+- completed days
+- remaining days
+- progress percentage
+- completion status
+
+When creating a plan:
+
+The user should be able to choose:
+
+- start date
+- end date
+
+OR
+
+- duration in days
+
+Examples:
+
+14 Day Recovery Plan
+
+30 Day Weight Loss Plan
+
+7 Day Fever Recovery
+
+90 Day Diabetes Management
+
+The backend should automatically calculate:
+
+- total days
+- remaining days
+- completed days
+
+The dashboard should display:
+
+Action Plans
+
+- Total Plans
+- Active Plans
+- Completed Plans
+- Expired Plans
+
+Clicking a plan should show:
+
+- progress
+- completed days
+- remaining days
+- today's tasks
+- upcoming tasks
+- completion percentage
+
+Agent 3 (Care Planner) should be able to:
+
+- create plans
+- update plans
+- modify plans
+- archive plans
+
+through CRUD operations.
+
+=========================================================
+3. CALENDAR EXPERIENCE
+=========================================================
+
+The calendar UI should feel similar to Samsung Calendar.
+
+Instead of the current hide/show implementation:
+
+When clicking the calendar:
+
+Open it as a centered modal dialog.
+
+Requirements:
+
+- overlay background
+- smooth animation
+- responsive
+- month navigation
+- today's highlight
+- plan highlighting
+- task highlighting
+
+Selecting a date should immediately show:
+
+- plans
+- medications
+- tasks
+- appointments
+
+for that day.
+
+=========================================================
+4. MOBILE RESPONSIVENESS
+=========================================================
+
+The mobile experience needs significant improvement.
+
+Review every major page including:
+
+- Dashboard
+- Care Companion
+- Health Checkup
+- Health Education
+- Plan Tracker
+- Task Manager
+- Profile
+
+Fix:
+
+- broken layouts
+- overflow
+- spacing
+- alignment
+- button sizing
+- typography
+- chat width
+- scrolling
+- responsiveness
+
+Ensure the application provides a polished mobile experience.
+
+=========================================================
+5. CARE COMPANION CONVERSATION EXPERIENCE
+=========================================================
+
+The current chat behaves like a generic AI chatbot.
+
+I want it to behave like a real personal healthcare companion.
+
+The conversation should be:
+
+- proactive
+- contextual
+- friendly
+- interactive
+- personalized
+
+Instead of expecting long text responses every time, the AI should guide the user using interactive choices.
+
+Examples:
+
+"How are you feeling today?"
+
+Buttons:
+
+😊 Great
+
+🙂 Good
+
+😐 Okay
+
+😔 Not Good
+
+😣 Very Sick
+
+Example:
+
+"When did you last eat?"
+
+Buttons:
+
+Breakfast
+
+Lunch
+
+Dinner
+
+Snacks
+
+Not Yet
+
+Example:
+
+"Did you take today's medicine?"
+
+Buttons:
+
+Yes
+
+No
+
+Skip
+
+Remind Me Later
+
+Example:
+
+"How much water have you had today?"
+
+Buttons:
+
+< 1 L
+
+1 L
+
+2 L
+
+3 L+
+
+Example:
+
+"Did you sleep well?"
+
+Buttons:
+
+Excellent
+
+Average
+
+Poor
+
+The conversation should feel like chatting with a healthcare companion instead of filling out forms.
+
+Requirements:
+
+- quick reply buttons
+- chips
+- cards
+- selectable options
+- contextual follow-up questions
+- minimal typing
+
+The AI should remember previous conversation context and personalize future interactions using the user's:
+
+- profile
+- medical conditions
+- active plans
+- daily logs
+- medications
+- recent conversations
+
+Agent 3 should proactively initiate conversations such as:
+
+- medication reminders
+- hydration reminders
+- plan progress
+- missed tasks
+- motivational check-ins
+- recovery follow-ups
+
+=========================================================
+6. DATABASE VERIFICATION
+=========================================================
+
+Audit every module to ensure persistence.
+
+Verify that all CRUD operations correctly:
+
+- save to PostgreSQL
+- update records
+- delete records
+- reload correctly
+
+After refreshing the browser or signing out and signing back in, all user data must remain synchronized.
+
+Remove any temporary state that does not persist data correctly.
+
+=========================================================
+GENERAL REQUIREMENTS
+=========================================================
+
+- Preserve the current multi-agent architecture.
+- Continue using the existing Agent Router.
+- Do not replace CrewAI integrations.
+- Do not redesign completed modules.
+- Modify only what is necessary.
+- Maintain clean, reusable code.
+- Test every feature after implementation.
+- Update README.md and PROGRESS.md with every completed enhancement.
+- If any database schema changes are required, create proper migrations instead of modifying existing data manually.
+
+Complete these enhancements while preserving the current architecture and application behavior.

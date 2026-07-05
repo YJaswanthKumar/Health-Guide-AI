@@ -19,6 +19,18 @@ function getAI(): GoogleGenAI {
   return _ai;
 }
 
+const AI_TIMEOUT_MS = 25_000;
+
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms);
+    promise.then(
+      (value) => { clearTimeout(timer); resolve(value); },
+      (err) => { clearTimeout(timer); reject(err); },
+    );
+  });
+}
+
 const EXTRACT_PROMPT = `You are a medical document analyst. Extract all medical information from this document image and return a structured JSON object.
 
 Extract as much detail as possible, including:
@@ -104,11 +116,15 @@ async function applyDocumentToProfile(
       .replace("PROFILE_JSON", JSON.stringify(profileForPrompt, null, 2))
       .replace("DOCUMENT_JSON", JSON.stringify(extractedData, null, 2));
 
-    const response = await getAI().models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
-      config: { maxOutputTokens: 4096 },
-    });
+    const response = await withTimeout(
+      getAI().models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        config: { maxOutputTokens: 4096 },
+      }),
+      AI_TIMEOUT_MS,
+      "Profile merge AI call",
+    );
 
     const raw = response.text ?? "{}";
     const jsonStr = raw.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
@@ -148,7 +164,9 @@ async function applyDocumentToProfile(
     }
 
     if (Object.keys(safeUpdates).length > 0) {
-      await db.update(userProfilesTable).set(safeUpdates as Parameters<typeof db.update>[0]).where(eq(userProfilesTable.clerkUserId, userId));
+      await db.update(userProfilesTable)
+        .set(safeUpdates as Partial<typeof userProfilesTable.$inferInsert>)
+        .where(eq(userProfilesTable.clerkUserId, userId));
     }
 
     return { updated: true, reason: "Profile updated from document", changes: Object.keys(safeUpdates) };
@@ -179,19 +197,23 @@ router.post("/upload", upload.single("document"), async (req, res): Promise<void
     let summary = "";
 
     try {
-      const response = await getAI().models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: [
-          {
-            role: "user",
-            parts: [
-              { text: EXTRACT_PROMPT },
-              { inlineData: { mimeType: mimetype, data: base64 } },
-            ],
-          },
-        ],
-        config: { maxOutputTokens: 8192 },
-      });
+      const response = await withTimeout(
+        getAI().models.generateContent({
+          model: "gemini-2.5-flash",
+          contents: [
+            {
+              role: "user",
+              parts: [
+                { text: EXTRACT_PROMPT },
+                { inlineData: { mimeType: mimetype, data: base64 } },
+              ],
+            },
+          ],
+          config: { maxOutputTokens: 8192 },
+        }),
+        AI_TIMEOUT_MS,
+        "Document extraction AI call",
+      );
 
       const raw = response.text ?? "{}";
       const jsonStr = raw.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();

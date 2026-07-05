@@ -439,6 +439,18 @@ components:
           type: ["string", "null"]
         status:
           type: string
+        startDate:
+          type: ["string", "null"]
+        endDate:
+          type: ["string", "null"]
+        durationDays:
+          type: ["integer", "null"]
+        progress:
+          type: ["integer", "null"]
+          description: Computed progress percentage (0-100) based on elapsed time between startDate and endDate, or plan status.
+        daysRemaining:
+          type: ["integer", "null"]
+          description: Computed days remaining until endDate (negative if overdue).
         createdAt:
           type: string
         updatedAt:
@@ -454,6 +466,10 @@ components:
           type: string
         description:
           type: string
+        startDate:
+          type: string
+        endDate:
+          type: string
 
     PlanUpdate:
       type: object
@@ -463,6 +479,10 @@ components:
         status:
           type: string
         description:
+          type: string
+        startDate:
+          type: string
+        endDate:
           type: string
 
     DailyLog:

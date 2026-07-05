@@ -4,7 +4,8 @@ import { useUser } from "@clerk/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useUpsertProfile } from "@workspace/api-client-react";
+import { useUpsertProfile, getGetProfileQueryKey } from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -87,6 +88,7 @@ export default function OnboardingPage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const { user } = useUser();
+  const queryClient = useQueryClient();
   const upsertProfile = useUpsertProfile();
 
   const [docUploading, setDocUploading] = useState(false);
@@ -134,12 +136,17 @@ export default function OnboardingPage() {
         additionalDetails: additionalDetails ? JSON.stringify(additionalDetails) : undefined,
       }
     }, {
-      onSuccess: () => {
+      onSuccess: (savedProfile) => {
+        // Seed the profile query cache immediately so the Dashboard's
+        // useGetProfile doesn't see a stale 404 and bounce back here.
+        queryClient.setQueryData(getGetProfileQueryKey(), savedProfile);
+        queryClient.invalidateQueries({ queryKey: getGetProfileQueryKey() });
         toast({ title: "Profile complete", description: "Welcome to VitalGuide." });
         setLocation("/dashboard");
       },
-      onError: () => {
-        toast({ title: "Error", description: "Failed to save profile.", variant: "destructive" });
+      onError: (err) => {
+        const message = err instanceof Error ? err.message : "Failed to save profile.";
+        toast({ title: "Error", description: message, variant: "destructive" });
       }
     });
   };

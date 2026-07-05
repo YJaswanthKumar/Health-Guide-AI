@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { useAuth } from "@clerk/react";
-import { useListPlans, useCreatePlan, useGetTodayLog, useListConversations, useCreateConversation, useGetConversationMessages, getGetTodayLogQueryKey, getGetConversationMessagesQueryKey } from "@workspace/api-client-react";
+import { useListPlans, useCreatePlan, useUpdatePlan, useDeletePlan, useGetTodayLog, useListConversations, useCreateConversation, useGetConversationMessages, getGetTodayLogQueryKey, getGetConversationMessagesQueryKey, getListPlansQueryKey } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { CalendarHeart, Plus, Activity, Bot, CheckCircle2, Clock, CalendarDays, ChevronRight } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { CalendarHeart, Plus, Activity, Bot, CheckCircle2, Clock, CalendarDays, ChevronRight, Pencil, Trash2, AlarmClock } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -16,8 +17,12 @@ import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import ChatInterface from "@/components/chat/ChatInterface";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import TodayLogModal, { type DailyLog } from "@/components/log/TodayLogModal";
-import LogCalendar from "@/components/log/LogCalendar";
+import CalendarModal from "@/components/log/CalendarModal";
 import TaskListPanel from "@/components/tasks/TaskListPanel";
 import type { Task } from "@/components/tasks/TodayTasksWidget";
 
@@ -25,18 +30,27 @@ const planSchema = z.object({
   title: z.string().min(2),
   type: z.string(),
   description: z.string().optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  status: z.string().optional(),
 });
+
+type PlanFormValues = z.infer<typeof planSchema>;
 
 export default function PlannerPage() {
   const { data: plans } = useListPlans();
   const { data: todayLog, refetch: refetchTodayLog } = useGetTodayLog({ query: { retry: false, queryKey: getGetTodayLogQueryKey() } });
   const { data: convos } = useListConversations();
   const createPlan = useCreatePlan();
+  const updatePlan = useUpdatePlan();
+  const deletePlan = useDeletePlan();
   const createConversation = useCreateConversation();
   const { getToken } = useAuth();
   const { toast } = useToast();
 
   const [isAddPlanOpen, setIsAddPlanOpen] = useState(false);
+  const [editingPlanId, setEditingPlanId] = useState<number | null>(null);
+  const [deletePlanId, setDeletePlanId] = useState<number | null>(null);
   const [showCalendar, setShowCalendar] = useState(false);
   const [calRefresh, setCalRefresh] = useState(0);
 
@@ -50,9 +64,9 @@ export default function PlannerPage() {
   const plannerConvos = convos?.filter(c => c.mode === "planner") || [];
   const [activeConvoId, setActiveConvoId] = useState<number | null>(null);
 
-  const planForm = useForm<z.infer<typeof planSchema>>({
+  const planForm = useForm<PlanFormValues>({
     resolver: zodResolver(planSchema),
-    defaultValues: { title: "", type: "custom", description: "" }
+    defaultValues: { title: "", type: "custom", description: "", startDate: "", endDate: "", status: "active" }
   });
 
   const fetchTasks = useCallback(async () => {
@@ -67,13 +81,60 @@ export default function PlannerPage() {
 
   useEffect(() => { fetchTasks(); }, [fetchTasks]);
 
-  const onPlanSubmit = (data: z.infer<typeof planSchema>) => {
-    createPlan.mutate({ data }, {
+  const onPlanSubmit = (data: PlanFormValues) => {
+    const payload = {
+      ...data,
+      startDate: data.startDate || undefined,
+      endDate: data.endDate || undefined,
+    };
+    if (editingPlanId) {
+      updatePlan.mutate({ id: editingPlanId, data: payload }, {
+        onSuccess: () => {
+          toast({ title: "Plan updated", description: "Your health plan was updated." });
+          setIsAddPlanOpen(false);
+          setEditingPlanId(null);
+          planForm.reset();
+          queryClient.invalidateQueries({ queryKey: getListPlansQueryKey() });
+        }
+      });
+    } else {
+      createPlan.mutate({ data: payload }, {
+        onSuccess: () => {
+          toast({ title: "Plan created", description: "Your new health plan is active." });
+          setIsAddPlanOpen(false);
+          planForm.reset();
+          queryClient.invalidateQueries({ queryKey: getListPlansQueryKey() });
+        }
+      });
+    }
+  };
+
+  const openEditPlan = (plan: NonNullable<typeof plans>[number]) => {
+    setEditingPlanId(plan.id);
+    planForm.reset({
+      title: plan.title,
+      type: plan.type,
+      description: plan.description || "",
+      startDate: plan.startDate || "",
+      endDate: plan.endDate || "",
+      status: plan.status || "active",
+    });
+    setIsAddPlanOpen(true);
+  };
+
+  const openNewPlan = () => {
+    setEditingPlanId(null);
+    planForm.reset({ title: "", type: "custom", description: "", startDate: "", endDate: "", status: "active" });
+    setIsAddPlanOpen(true);
+  };
+
+  const confirmDeletePlan = () => {
+    if (deletePlanId == null) return;
+    deletePlan.mutate({ id: deletePlanId }, {
       onSuccess: () => {
-        toast({ title: "Plan created", description: "Your new health plan is active." });
-        setIsAddPlanOpen(false);
-        planForm.reset();
-        queryClient.invalidateQueries({ queryKey: ["/api/plans"] });
+        toast({ title: "Plan deleted" });
+        setDeletePlanId(null);
+        queryClient.invalidateQueries({ queryKey: getListPlansQueryKey() });
       }
     });
   };
@@ -143,18 +204,18 @@ export default function PlannerPage() {
             <p className="text-sm text-slate-500 mt-1">Manage plans, tasks, and daily logs</p>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" className="gap-1.5 border-slate-200" onClick={() => setShowCalendar(p => !p)}>
-              <CalendarDays size={14} /> {showCalendar ? "Hide" : "Calendar"}
+            <Button variant="outline" size="sm" className="gap-1.5 border-slate-200" onClick={() => setShowCalendar(true)}>
+              <CalendarDays size={14} /> Calendar
             </Button>
-            <Dialog open={isAddPlanOpen} onOpenChange={setIsAddPlanOpen}>
+            <Dialog open={isAddPlanOpen} onOpenChange={(open) => { setIsAddPlanOpen(open); if (!open) setEditingPlanId(null); }}>
               <DialogTrigger asChild>
-                <Button className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm" size="sm">
+                <Button className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm" size="sm" onClick={openNewPlan}>
                   <Plus className="w-4 h-4 mr-1.5" /> Add Plan
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-md">
+              <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                  <DialogTitle className="text-xl font-semibold">Create New Plan</DialogTitle>
+                  <DialogTitle className="text-xl font-semibold">{editingPlanId ? "Edit Plan" : "Create New Plan"}</DialogTitle>
                 </DialogHeader>
                 <Form {...planForm}>
                   <form onSubmit={planForm.handleSubmit(onPlanSubmit)} className="space-y-5 pt-4">
@@ -179,14 +240,43 @@ export default function PlannerPage() {
                         </Select>
                       </FormItem>
                     )} />
+                    <div className="grid grid-cols-2 gap-3">
+                      <FormField control={planForm.control} name="startDate" render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Start Date</FormLabel>
+                          <FormControl><Input type="date" className="h-11" {...field} /></FormControl>
+                        </FormItem>
+                      )} />
+                      <FormField control={planForm.control} name="endDate" render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>End Date</FormLabel>
+                          <FormControl><Input type="date" className="h-11" min={planForm.watch("startDate") || undefined} {...field} /></FormControl>
+                        </FormItem>
+                      )} />
+                    </div>
+                    {editingPlanId && (
+                      <FormField control={planForm.control} name="status" render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Status</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl><SelectTrigger className="h-11"><SelectValue /></SelectTrigger></FormControl>
+                            <SelectContent>
+                              <SelectItem value="active">Active</SelectItem>
+                              <SelectItem value="completed">Completed</SelectItem>
+                              <SelectItem value="cancelled">Cancelled</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </FormItem>
+                      )} />
+                    )}
                     <FormField control={planForm.control} name="description" render={({ field }) => (
                       <FormItem>
                         <FormLabel>Details / Notes</FormLabel>
                         <FormControl><Textarea className="resize-none min-h-[100px]" placeholder="Specific instructions..." {...field} /></FormControl>
                       </FormItem>
                     )} />
-                    <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 h-11 text-base mt-2" disabled={createPlan.isPending}>
-                      {createPlan.isPending ? "Saving..." : "Save Plan"}
+                    <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 h-11 text-base mt-2" disabled={createPlan.isPending || updatePlan.isPending}>
+                      {createPlan.isPending || updatePlan.isPending ? "Saving..." : editingPlanId ? "Update Plan" : "Save Plan"}
                     </Button>
                   </form>
                 </Form>
@@ -223,21 +313,6 @@ export default function PlannerPage() {
           </Card>
         </button>
 
-        {/* Calendar */}
-        {showCalendar && (
-          <section>
-            <h2 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-1.5">
-              <CalendarDays size={14} className="text-slate-500" /> Log History
-            </h2>
-            <LogCalendar
-              selectedDate={logDate}
-              onSelectDate={(date) => openLogForDate(date)}
-              refreshTrigger={calRefresh}
-            />
-            <p className="text-xs text-slate-400 mt-2 text-center">Click any past date to review or edit that day's log</p>
-          </section>
-        )}
-
         {/* Active Plans */}
         <section className="space-y-4">
           <h2 className="text-base font-semibold text-slate-900 tracking-tight">Your Active Plans</h2>
@@ -248,20 +323,56 @@ export default function PlannerPage() {
               <p className="text-sm text-slate-500 mt-1">Create a plan to start tracking your health goals.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {plans?.map(p => (
-                <Card key={p.id} className="shadow-sm border-slate-200 overflow-hidden">
-                  <div className="h-1.5 w-full bg-slate-100" />
-                  <CardHeader className="p-5 pb-3">
-                    <div className="flex justify-between items-start mb-2">
-                      <Badge variant="outline" className={`capitalize font-medium ${getTypeColor(p.type)}`}>{p.type}</Badge>
-                      <Badge variant="secondary" className={p.status === "active" ? "bg-emerald-50 text-emerald-700" : ""}>{p.status}</Badge>
-                    </div>
-                    <CardTitle className="text-base font-semibold leading-tight">{p.title}</CardTitle>
-                    {p.description && <p className="text-sm text-slate-600 mt-1 line-clamp-2">{p.description}</p>}
-                  </CardHeader>
-                </Card>
-              ))}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {plans?.map(p => {
+                const progress = p.progress ?? (p.status === "completed" ? 100 : p.status === "cancelled" ? null : null);
+                const overdue = typeof p.daysRemaining === "number" && p.daysRemaining < 0 && p.status === "active";
+                return (
+                  <Card key={p.id} className="shadow-sm border-slate-200 overflow-hidden group">
+                    <div className={`h-1.5 w-full ${p.status === "completed" ? "bg-emerald-400" : overdue ? "bg-rose-400" : "bg-blue-400"}`} />
+                    <CardHeader className="p-5 pb-3">
+                      <div className="flex justify-between items-start mb-2">
+                        <Badge variant="outline" className={`capitalize font-medium ${getTypeColor(p.type)}`}>{p.type}</Badge>
+                        <div className="flex items-center gap-1">
+                          <Badge variant="secondary" className={p.status === "active" ? "bg-emerald-50 text-emerald-700" : p.status === "completed" ? "bg-blue-50 text-blue-700" : "bg-slate-100 text-slate-500"}>{p.status}</Badge>
+                          <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => openEditPlan(p)}>
+                            <Pencil size={13} className="text-slate-400" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => setDeletePlanId(p.id)}>
+                            <Trash2 size={13} className="text-rose-400" />
+                          </Button>
+                        </div>
+                      </div>
+                      <CardTitle className="text-base font-semibold leading-tight">{p.title}</CardTitle>
+                      {p.description && <p className="text-sm text-slate-600 mt-1 line-clamp-2">{p.description}</p>}
+
+                      {(p.startDate || p.endDate) && (
+                        <div className="flex items-center gap-1.5 mt-2 text-xs text-slate-500">
+                          <CalendarDays size={12} />
+                          <span>{p.startDate ?? "—"} → {p.endDate ?? "—"}</span>
+                          {p.durationDays != null && <span className="text-slate-400">({p.durationDays}d)</span>}
+                        </div>
+                      )}
+
+                      {progress != null && (
+                        <div className="mt-3 space-y-1.5">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="text-slate-500 font-medium">Progress</span>
+                            <span className="font-semibold text-slate-700">{progress}%</span>
+                          </div>
+                          <Progress value={progress} className="h-2" />
+                          {typeof p.daysRemaining === "number" && p.status === "active" && (
+                            <div className={`flex items-center gap-1 text-[11px] font-medium ${overdue ? "text-rose-500" : "text-slate-400"}`}>
+                              <AlarmClock size={11} />
+                              {overdue ? `${Math.abs(p.daysRemaining)} days overdue` : `${p.daysRemaining} days remaining`}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </CardHeader>
+                  </Card>
+                );
+              })}
             </div>
           )}
         </section>
@@ -317,6 +428,32 @@ export default function PlannerPage() {
         initialLog={selectedLog}
         onSaved={handleLogSaved}
       />
+
+      {/* Calendar Modal (Samsung-style centered) */}
+      <CalendarModal
+        open={showCalendar}
+        onOpenChange={setShowCalendar}
+        selectedDate={logDate}
+        onSelectDate={(date) => { setShowCalendar(false); openLogForDate(date); }}
+        refreshTrigger={calRefresh}
+        plans={plans}
+      />
+
+      {/* Delete Plan Confirmation */}
+      <AlertDialog open={deletePlanId != null} onOpenChange={(open) => !open && setDeletePlanId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this plan?</AlertDialogTitle>
+            <AlertDialogDescription>This will permanently remove the plan and its progress. This action cannot be undone.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction className="bg-rose-600 hover:bg-rose-700" onClick={confirmDeletePlan} disabled={deletePlan.isPending}>
+              {deletePlan.isPending ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

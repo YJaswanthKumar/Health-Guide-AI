@@ -4,6 +4,7 @@ import { db, conversations, messages, userProfilesTable, medicalDocumentsTable, 
 import { eq, and, desc } from "drizzle-orm";
 import { logger } from "../lib/logger";
 import { invokeAgent, buildCarePlannerInput, type AgentCarePlannerOutput, type AgentTaskOutput } from "../lib/agentRouter";
+import { applyPlanActions } from "../lib/planActions";
 
 const router = Router();
 
@@ -71,8 +72,8 @@ function extractAssessment(output: Record<string, unknown>): AssessmentData | nu
     severity: normSeverity(src.severity ?? src.risk_level ?? src.urgency_level),
     recovery_suggestions: arrVal(src.recovery_suggestions ?? src.recommendations ?? src.treatment_plan),
     food_nutrition_recommendations: arrVal(src.food_nutrition_recommendations ?? src.nutrition_recommendations ?? src.dietary_advice),
-    medication_guidance: src.medication_guidance ?? src.medications ?? src.medication_advice,
-    doctor_recommendation: src.doctor_recommendation ?? src.physician_advice ?? src.medical_referral,
+    medication_guidance: (src.medication_guidance ?? src.medications ?? src.medication_advice) as string | Record<string, unknown> | undefined,
+    doctor_recommendation: (src.doctor_recommendation ?? src.physician_advice ?? src.medical_referral) as string | Record<string, unknown> | undefined,
     warning_signs: arrVal(src.warning_signs ?? src.red_flags ?? src.danger_signs),
     profile_update_suggestions: (src.profile_update_suggestions ?? src.profile_updates ?? null) as Record<string, unknown> | null,
     raw: output,
@@ -384,6 +385,7 @@ router.post("/conversations/:id/message", async (req, res) => {
           newTasks.push(created);
         }
       }
+      await applyPlanActions(actions, userId);
     } else if (carePlanResult.status === "rejected") {
       logger.warn({ err: carePlanResult.reason }, "Agent 3 failed for care plan");
     }

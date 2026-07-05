@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useLocation } from "wouter";
-import { useGetProfile, useListPlans, useGetTodayLog, getGetProfileQueryKey, getListPlansQueryKey, getGetTodayLogQueryKey } from "@workspace/api-client-react";
+import { useGetProfile, useListPlans, useGetTodayLog, getGetProfileQueryKey, getListPlansQueryKey, getGetTodayLogQueryKey, ApiError } from "@workspace/api-client-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -64,7 +64,11 @@ export default function DashboardPage() {
   });
 
   useEffect(() => {
-    if (profileError) setLocation("/onboarding");
+    // Only redirect to onboarding when the server has confirmed no profile
+    // exists (404). Other errors (network blips, transient 5xx) shouldn't
+    // bounce the user out of the dashboard and back into onboarding.
+    const isMissingProfile = profileError instanceof ApiError && profileError.status === 404;
+    if (isMissingProfile) setLocation("/onboarding");
   }, [profileError, setLocation]);
 
   const fetchTasks = useCallback(async () => {

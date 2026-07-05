@@ -10,6 +10,9 @@ export const plansTable = pgTable("plans", {
   type: text("type").notNull(),
   description: text("description"),
   status: text("status").notNull().default("active"),
+  startDate: text("start_date"),
+  endDate: text("end_date"),
+  durationDays: integer("duration_days"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

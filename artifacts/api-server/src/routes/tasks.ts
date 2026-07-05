@@ -9,6 +9,7 @@ import {
   type AgentCarePlannerOutput,
   type AgentTaskOutput,
 } from "../lib/agentRouter";
+import { applyPlanActions } from "../lib/planActions";
 
 const router = Router();
 
@@ -134,7 +135,7 @@ router.post("/agent-refresh", async (req, res) => {
       .select()
       .from(dailyLogsTable)
       .where(eq(dailyLogsTable.clerkUserId, userId))
-      .orderBy(desc(dailyLogsTable.date))
+      .orderBy(desc(dailyLogsTable.logDate))
       .limit(7);
 
     const input = buildCarePlannerInput({
@@ -196,6 +197,7 @@ router.post("/agent-refresh", async (req, res) => {
         }
       }
     }
+    await applyPlanActions(actions, userId);
 
     const updatedTasks = await db
       .select()
