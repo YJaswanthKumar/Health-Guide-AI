@@ -226,16 +226,16 @@ pnpm --filter @workspace/api-spec run codegen
 
 ## 🔑 Environment Variables
 
-Copy `.env.example` to `.env` and fill in the values. On Replit, add secrets via the **Secrets** panel instead of a `.env` file.
+On Replit, all sensitive values (API keys, tokens, secrets) live in the **Secrets** panel — never in a `.env` file. The `.env` file in this repo is git-ignored and should only hold non-sensitive local overrides (e.g. `PORT`, `NODE_ENV`).
 
 | Variable | Required | Description |
 |---|---|---|
 | `DATABASE_URL` | ✅ Auto (Replit) | PostgreSQL connection string — injected automatically by Replit |
-| `CLERK_PUBLISHABLE_KEY` | ✅ | Clerk publishable key (`pk_...`) |
-| `CLERK_SECRET_KEY` | ✅ | Clerk secret key (`sk_...`) |
-| `GEMINI_API_KEY` | ✅ | Google Gemini API key — powers all AI chat features (Gemini 2.5 Flash) |
-| `OPENAI_API_KEY` | ⚠️ Optional | OpenAI key — used for document extraction and media utilities |
-| `SESSION_SECRET` | ✅ | Random secret string for session signing |
+| `CLERK_PUBLISHABLE_KEY` | ✅ Secret | Clerk publishable key (`pk_...`) |
+| `CLERK_SECRET_KEY` | ✅ Secret | Clerk secret key (`sk_...`) |
+| `GEMINI_API_KEY` | ✅ Secret | Google Gemini API key — powers all AI chat features (Gemini 2.5 Flash) |
+| `OPENAI_API_KEY` | ⚠️ Optional Secret | OpenAI key — used for document extraction and media utilities |
+| `SESSION_SECRET` | ✅ Secret (Auto on Replit) | Random secret string for session signing |
 | `PORT` | ✅ | Port for each server (8080 for API, 5000 for frontend) |
 | `BASE_PATH` | ✅ | URL base path — use `/` for local dev |
 | `NODE_ENV` | Auto | `development` or `production` |

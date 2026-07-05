@@ -54,7 +54,7 @@ Users complete a 3-step onboarding (profile) before accessing AI features. Profi
 
 ## User preferences
 
-_No explicit preferences captured yet._
+- Keep `PROGRESS.md` and `README.md` up to date consistently — update them whenever meaningful changes are made, not just at the end of a session.
 
 ## Gotchas
 

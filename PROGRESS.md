@@ -1,7 +1,7 @@
 # VitalGuide — Multi-Agent Build Progress
 
 > **Last updated:** July 5, 2026  
-> **Status:** ✅ Phase 2 complete — Health Checkup fully multi-agent (Agents 2 + 4 + 5 + 3)  
+> **Status:** ✅ Phase 2 complete — Health Checkup fully multi-agent (Agents 2 + 4 + 5 + 3). Re-imported into a fresh Replit environment and re-verified working.  
 > **Both workflows running:** Backend API (port 8080) · Frontend (port 5000)
 
 ---
@@ -301,3 +301,4 @@ Restart the `Backend API` workflow (it rebuilds via esbuild on start).
 |------|--------------|
 | Jul 5, 2026 | Phase 1: DB schema (tasks + companion), agent router, tasks/companion routes, CareCompanionWidget, TodayTasksWidget, TaskListPanel, CompanionPage, DashboardPage/PlannerPage/App/AppLayout all updated. Both workflows confirmed running. |
 | Jul 5, 2026 | Phase 2: conversations.checkup_assessment JSONB column, checkup.ts backend route (Agent 2 conversational + Agent 4/5/3 parallel orchestration), AssessmentCard, EmergencyBanner, ProfileUpdateDialog, CheckupChatInterface, CheckupPage updated. DB pushed. Both workflows running. |
+| Jul 5, 2026 | Re-import into fresh Replit environment: ran `pnpm install`, moved `CLERK_PUBLISHABLE_KEY`/`CLERK_SECRET_KEY`/`GEMINI_API_KEY` into Replit Secrets (were previously sitting as plaintext values in the git-tracked `.env`), added `.env`/`.env.*` to `.gitignore`, pushed DB schema, restarted both workflows, verified landing page renders. |
