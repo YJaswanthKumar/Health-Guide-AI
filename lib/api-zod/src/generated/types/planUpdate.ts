@@ -9,6 +9,7 @@
 export interface PlanUpdate {
   title?: string;
   status?: string;
+  category?: string;
   description?: string;
   startDate?: string;
   endDate?: string;

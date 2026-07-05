@@ -327,12 +327,18 @@ export default function PlannerPage() {
               {plans?.map(p => {
                 const progress = p.progress ?? (p.status === "completed" ? 100 : p.status === "cancelled" ? null : null);
                 const overdue = typeof p.daysRemaining === "number" && p.daysRemaining < 0 && p.status === "active";
+                const planTasks = tasks.filter(t => t.planId === p.id);
                 return (
                   <Card key={p.id} className="shadow-sm border-slate-200 overflow-hidden group">
                     <div className={`h-1.5 w-full ${p.status === "completed" ? "bg-emerald-400" : overdue ? "bg-rose-400" : "bg-blue-400"}`} />
                     <CardHeader className="p-5 pb-3">
                       <div className="flex justify-between items-start mb-2">
-                        <Badge variant="outline" className={`capitalize font-medium ${getTypeColor(p.type)}`}>{p.type}</Badge>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <Badge variant="outline" className={`capitalize font-medium ${getTypeColor(p.category ?? p.type)}`}>{p.category ?? p.type}</Badge>
+                          {p.sourceAgent === "agent3" && (
+                            <span className="text-[9px] bg-teal-50 text-teal-600 border border-teal-100 rounded-full px-1.5 py-0 font-semibold">AI</span>
+                          )}
+                        </div>
                         <div className="flex items-center gap-1">
                           <Badge variant="secondary" className={p.status === "active" ? "bg-emerald-50 text-emerald-700" : p.status === "completed" ? "bg-blue-50 text-blue-700" : "bg-slate-100 text-slate-500"}>{p.status}</Badge>
                           <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => openEditPlan(p)}>
@@ -357,16 +363,40 @@ export default function PlannerPage() {
                       {progress != null && (
                         <div className="mt-3 space-y-1.5">
                           <div className="flex items-center justify-between text-xs">
-                            <span className="text-slate-500 font-medium">Progress</span>
+                            <span className="text-slate-500 font-medium">
+                              Progress{p.currentDay != null && p.durationDays != null ? ` · Day ${p.currentDay}/${p.durationDays}` : ""}
+                            </span>
                             <span className="font-semibold text-slate-700">{progress}%</span>
                           </div>
                           <Progress value={progress} className="h-2" />
-                          {typeof p.daysRemaining === "number" && p.status === "active" && (
-                            <div className={`flex items-center gap-1 text-[11px] font-medium ${overdue ? "text-rose-500" : "text-slate-400"}`}>
-                              <AlarmClock size={11} />
-                              {overdue ? `${Math.abs(p.daysRemaining)} days overdue` : `${p.daysRemaining} days remaining`}
-                            </div>
-                          )}
+                          <div className="flex items-center justify-between text-[11px] text-slate-400">
+                            {p.completedDays != null && <span>{p.completedDays} day{p.completedDays === 1 ? "" : "s"} completed</span>}
+                            {typeof p.daysRemaining === "number" && p.status === "active" && (
+                              <div className={`flex items-center gap-1 font-medium ${overdue ? "text-rose-500" : "text-slate-400"}`}>
+                                <AlarmClock size={11} />
+                                {overdue ? `${Math.abs(p.daysRemaining)} days overdue` : `${p.daysRemaining} days remaining`}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {planTasks.length > 0 && (
+                        <div className="mt-3 pt-3 border-t border-slate-100">
+                          <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide mb-1.5">
+                            Associated Tasks ({planTasks.length})
+                          </p>
+                          <div className="space-y-1">
+                            {planTasks.slice(0, 4).map(t => (
+                              <div key={t.id} className="flex items-center gap-1.5 text-xs">
+                                <CheckCircle2 size={11} className={t.completed ? "text-emerald-500" : "text-slate-300"} />
+                                <span className={t.completed ? "line-through text-slate-400" : "text-slate-600"}>{t.title}</span>
+                              </div>
+                            ))}
+                            {planTasks.length > 4 && (
+                              <p className="text-[11px] text-slate-400">+{planTasks.length - 4} more</p>
+                            )}
+                          </div>
                         </div>
                       )}
                     </CardHeader>

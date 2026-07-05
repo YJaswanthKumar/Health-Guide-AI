@@ -8,6 +8,18 @@ import { logger } from "../lib/logger";
 const router = Router();
 
 function withComputedFields(plan: Plan) {
+  // Prefer Agent 3's own progress figures (stored on the plan) when present;
+  // fall back to a time-elapsed estimate otherwise so older/manual plans
+  // (created before the extended schema, or without agent involvement)
+  // still render sensibly.
+  if (plan.progressPercentage != null || plan.remainingDays != null) {
+    return {
+      ...plan,
+      progress: plan.progressPercentage ?? (plan.status === "completed" ? 100 : null),
+      daysRemaining: plan.remainingDays,
+    };
+  }
+
   let progress: number | null = null;
   let daysRemaining: number | null = null;
 
@@ -60,6 +72,11 @@ router.post("/", async (req, res) => {
       clerkUserId: userId,
       ...parsed.data,
       durationDays,
+      completedDays: durationDays != null ? 0 : null,
+      remainingDays: durationDays,
+      progressPercentage: durationDays != null ? 0 : null,
+      currentDay: durationDays != null ? 1 : null,
+      sourceAgent: "user",
     }).returning();
     return res.status(201).json(withComputedFields(plan[0]));
   } catch (err) {
@@ -95,9 +112,15 @@ router.patch("/:id", async (req, res) => {
     if (!existing.length) return res.status(404).json({ error: "Not found" });
     const nextStart = parsed.data.startDate ?? existing[0].startDate;
     const nextEnd = parsed.data.endDate ?? existing[0].endDate;
-    const durationDays = computeDurationDays(nextStart, nextEnd);
+    const durationDays = computeDurationDays(nextStart, nextEnd) ?? existing[0].durationDays;
+    const updates: Record<string, unknown> = { ...parsed.data, durationDays };
+    if (parsed.data.status === "completed") {
+      updates.progressPercentage = 100;
+      updates.remainingDays = 0;
+      if (durationDays != null) updates.completedDays = durationDays;
+    }
     const updated = await db.update(plansTable)
-      .set({ ...parsed.data, durationDays })
+      .set(updates)
       .where(and(eq(plansTable.id, params.data.id), eq(plansTable.clerkUserId, userId)))
       .returning();
     if (!updated.length) return res.status(404).json({ error: "Not found" });

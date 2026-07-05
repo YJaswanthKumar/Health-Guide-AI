@@ -9,6 +9,7 @@
 export interface PlanInput {
   title: string;
   type: string;
+  category?: string;
   description?: string;
   startDate?: string;
   endDate?: string;

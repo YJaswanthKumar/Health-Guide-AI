@@ -10,6 +10,11 @@ export interface Plan {
   id: number;
   title: string;
   type: string;
+  /**
+     * Plan category, e.g. medication | diet | fitness | recovery | custom.
+     * @nullable
+     */
+  category?: string | null;
   /** @nullable */
   description?: string | null;
   status: string;
@@ -20,12 +25,37 @@ export interface Plan {
   /** @nullable */
   durationDays?: number | null;
   /**
-     * Computed progress percentage (0-100) based on elapsed time between startDate and endDate, or plan status.
+     * Number of days completed so far (agent-supplied or derived).
+     * @nullable
+     */
+  completedDays?: number | null;
+  /**
+     * Number of days left in the plan (agent-supplied or derived).
+     * @nullable
+     */
+  remainingDays?: number | null;
+  /**
+     * Stored progress percentage (0-100), agent-supplied or derived.
+     * @nullable
+     */
+  progressPercentage?: number | null;
+  /**
+     * Which day of the plan the user is currently on (1-indexed).
+     * @nullable
+     */
+  currentDay?: number | null;
+  /**
+     * Who created the plan — "user" or "agent3".
+     * @nullable
+     */
+  sourceAgent?: string | null;
+  /**
+     * Computed progress percentage (0-100) — prefers progressPercentage, falls back to elapsed-time estimate.
      * @nullable
      */
   progress?: number | null;
   /**
-     * Computed days remaining until endDate (negative if overdue).
+     * Computed days remaining until endDate — prefers remainingDays, falls back to elapsed-time estimate.
      * @nullable
      */
   daysRemaining?: number | null;

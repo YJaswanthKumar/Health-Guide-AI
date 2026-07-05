@@ -107,6 +107,24 @@ export async function invokeAgent(
   }
 }
 
+// Describes the Action Plan output schema Agent 3 (Intelligent Care Planner) must
+// produce for every plan object it returns, either as `care_plan` or inside
+// `backend_actions[].plan` for CREATE_PLAN / UPDATE_PLAN actions.
+const PLAN_OUTPUT_SCHEMA = {
+  title: "string — short plan name",
+  description: "string — what the plan involves and why",
+  category: "string — one of: medication | diet | fitness | recovery | custom",
+  start_date: "string (YYYY-MM-DD) — when the plan begins",
+  end_date: "string (YYYY-MM-DD) — when the plan is expected to end",
+  duration_days: "integer — total number of days the plan spans",
+  completed_days: "integer — number of days completed so far (0 for new plans)",
+  remaining_days: "integer — number of days left (duration_days - completed_days)",
+  progress_percentage: "integer 0-100 — completed_days / duration_days * 100",
+  current_day: "integer — which day of the plan the user is currently on (1-indexed)",
+  status: "string — one of: active | completed | cancelled",
+  tasks: "array of task objects — the concrete actions associated with this plan, each with title/description/category/priority/due_time/recurrence",
+};
+
 export function buildCarePlannerInput(opts: {
   userProfile: Record<string, unknown>;
   currentTasks: unknown[];
@@ -134,6 +152,17 @@ export function buildCarePlannerInput(opts: {
     emergency_output: {},
     user_message: opts.userMessage ?? "",
     conversation_history: opts.conversationHistory ?? [],
+    // Tells Agent 3 the exact Action Plan shape the backend expects when it
+    // returns a `care_plan` or a CREATE_PLAN/UPDATE_PLAN backend_action.
+    plan_output_schema: PLAN_OUTPUT_SCHEMA,
+    instructions:
+      "When proposing or updating a recovery/care plan, always produce a full Action Plan object " +
+      "matching plan_output_schema (title, description, category, start_date, end_date, duration_days, " +
+      "completed_days, remaining_days, progress_percentage, current_day, status, tasks) instead of a bare " +
+      "list of tasks. Include it as `care_plan` in the response, and emit a CREATE_PLAN (or UPDATE_PLAN, " +
+      "with plan_id, if modifying an existing plan from current_plans) backend_action carrying the same " +
+      "object under `plan`. Standalone day-to-day to-dos that are not part of a multi-day plan can still be " +
+      "returned as `today_tasks` / CREATE_TASK actions.",
   };
 }
 
@@ -153,10 +182,17 @@ export type AgentPlanOutput = {
   id?: string | number;
   title: string;
   type?: string;
+  category?: string;
   description?: string;
   status?: string;
   start_date?: string;
   end_date?: string;
+  duration_days?: number;
+  completed_days?: number;
+  remaining_days?: number;
+  progress_percentage?: number;
+  current_day?: number;
+  tasks?: AgentTaskOutput[];
 };
 
 export type AgentCarePlannerOutput = {

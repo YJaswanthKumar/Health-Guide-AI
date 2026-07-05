@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 
 export type Task = {
   id: number;
+  planId?: number | null;
   title: string;
   description?: string | null;
   category: string;

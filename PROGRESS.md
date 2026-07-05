@@ -1,7 +1,7 @@
 # VitalGuide — Multi-Agent Build Progress
 
 > **Last updated:** July 5, 2026  
-> **Status:** ✅ Phase 2 complete — Health Checkup fully multi-agent (Agents 2 + 4 + 5 + 3). Re-imported into a fresh Replit environment and re-verified working.  
+> **Status:** ✅ Phase 2 complete — Health Checkup fully multi-agent (Agents 2 + 4 + 5 + 3). ✅ Phase 2.5 complete — Agent 3 (Care Planner) upgraded to output full Action Plan objects (title/description/category/dates/progress/associated tasks) instead of simple task lists.  
 > **Both workflows running:** Backend API (port 8080) · Frontend (port 5000)
 
 ---

@@ -435,6 +435,9 @@ components:
           type: string
         type:
           type: string
+        category:
+          type: ["string", "null"]
+          description: Plan category, e.g. medication | diet | fitness | recovery | custom.
         description:
           type: ["string", "null"]
         status:
@@ -445,12 +448,27 @@ components:
           type: ["string", "null"]
         durationDays:
           type: ["integer", "null"]
+        completedDays:
+          type: ["integer", "null"]
+          description: Number of days completed so far (agent-supplied or derived).
+        remainingDays:
+          type: ["integer", "null"]
+          description: Number of days left in the plan (agent-supplied or derived).
+        progressPercentage:
+          type: ["integer", "null"]
+          description: Stored progress percentage (0-100), agent-supplied or derived.
+        currentDay:
+          type: ["integer", "null"]
+          description: Which day of the plan the user is currently on (1-indexed).
+        sourceAgent:
+          type: ["string", "null"]
+          description: Who created the plan — "user" or "agent3".
         progress:
           type: ["integer", "null"]
-          description: Computed progress percentage (0-100) based on elapsed time between startDate and endDate, or plan status.
+          description: Computed progress percentage (0-100) — prefers progressPercentage, falls back to elapsed-time estimate.
         daysRemaining:
           type: ["integer", "null"]
-          description: Computed days remaining until endDate (negative if overdue).
+          description: Computed days remaining until endDate — prefers remainingDays, falls back to elapsed-time estimate.
         createdAt:
           type: string
         updatedAt:
@@ -463,6 +481,8 @@ components:
         title:
           type: string
         type:
+          type: string
+        category:
           type: string
         description:
           type: string
@@ -477,6 +497,8 @@ components:
         title:
           type: string
         status:
+          type: string
+        category:
           type: string
         description:
           type: string
