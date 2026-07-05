@@ -1,0 +1,106 @@
+This project has been imported from another Replit workspace because the previous workspace exhausted its AI credits.
+
+IMPORTANT:
+This is NOT a new project.
+Do NOT redesign the architecture.
+Do NOT recreate existing functionality.
+Do NOT replace the current implementation.
+Do NOT remove any existing features unless absolutely necessary.
+
+Your first responsibility is to fully understand the current project before making any code changes.
+
+Read and analyze the following files completely:
+
+- README.md
+- PROGRESS.md
+- package.json
+- package-lock.json (if present)
+- .env (for environment variables and deployed CrewAI agents)
+- drizzle schema and migrations
+- Backend folder structure
+- Frontend folder structure
+- Agent Router
+- All CrewAI integration services
+- Existing API routes
+- Existing React pages
+- Existing database models
+
+The project has evolved from a Gemini-only healthcare assistant into a CrewAI Multi-Agent Healthcare Platform.
+
+The deployed CrewAI agents already exist and MUST NOT be recreated.
+
+Current deployed agents:
+
+1. Medical Report Intelligence
+2. Conversational Health Assessment
+3. Intelligent Care Planner
+4. Emergency Navigator
+5. Nutrition Intelligence (RAG)
+
+Current completed work:
+
+- Dashboard Care Companion integrated
+- Care Companion full chat page
+- Dashboard Task Manager
+- Plan Tracker Task Manager
+- Agent 3 (Care Planner) integrated
+- Health Checkup integrated with Agent 2
+- Emergency escalation integrated with Agent 4
+- Profile update confirmation workflow
+- Task CRUD
+- Dashboard synchronization
+- Plan Tracker synchronization
+- Backend Agent Router
+- Database migrations completed
+- CrewAI deployments configured through environment variables
+
+Your task is NOT to immediately write code.
+
+First:
+
+1. Read the entire project.
+2. Compare the implementation with README.md and PROGRESS.md.
+3. Verify the current architecture.
+4. Verify all CrewAI integrations.
+5. Detect any incomplete implementations.
+6. Detect any broken imports or API references.
+7. Detect TODOs.
+8. Detect database inconsistencies.
+9. Detect unused files.
+10. Detect any migration problems.
+
+Then produce a report containing:
+
+## Project Summary
+
+Summarize how the application currently works.
+
+## Current Completion Status
+
+List every completed feature.
+
+## CrewAI Integration Status
+
+State which agents are fully integrated and which are only deployed.
+
+## Remaining Work
+
+List all remaining implementation tasks in priority order.
+
+## Potential Issues
+
+List any bugs, inconsistencies, or missing integrations.
+
+## Suggested Development Order
+
+Recommend the safest order to complete the remaining work.
+
+## Files Likely To Change Next
+
+List only the files that will need modification for the next implementation phase.
+
+IMPORTANT:
+Do NOT modify any code during this analysis.
+Wait for my approval before implementing anything.
+
+This analysis will become the working context for all future development in this Replit workspace.
