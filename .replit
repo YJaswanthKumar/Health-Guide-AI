@@ -75,3 +75,5 @@ channel = "stable-25_05"
 
 [userenv.shared]
 BASE_PATH = "/"
+CLERK_PUBLISHABLE_KEY = "pk_test_ZHJpdmVuLXBpZ2Vvbi0xMS5jbGVyay5hY2NvdW50cy5kZXYk"
+VITE_CLERK_PUBLISHABLE_KEY = "pk_test_ZHJpdmVuLXBpZ2Vvbi0xMS5jbGVyay5hY2NvdW50cy5kZXYk"

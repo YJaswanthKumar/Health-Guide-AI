@@ -30,7 +30,11 @@ export default defineConfig({
   base: basePath,
   define: {
     "import.meta.env.VITE_CLERK_PUBLISHABLE_KEY": JSON.stringify(
-      process.env.VITE_CLERK_PUBLISHABLE_KEY || process.env.CLERK_PUBLISHABLE_KEY || ""
+      (() => {
+        const key = process.env.VITE_CLERK_PUBLISHABLE_KEY || process.env.CLERK_PUBLISHABLE_KEY;
+        if (!key) throw new Error("CLERK_PUBLISHABLE_KEY is required but was not set.");
+        return key;
+      })()
     ),
     "import.meta.env.VITE_CLERK_PROXY_URL": JSON.stringify(
       process.env.VITE_CLERK_PROXY_URL || ""

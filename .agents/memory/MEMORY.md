@@ -1,4 +1,5 @@
 - [Replit artifact workflow conflict](artifact-workflow-conflict.md) — `artifacts/api-server: API Server` owns port 8080; `Backend API` custom workflow conflicts and must not be restarted.
+- [Clerk env setup](clerk-env-setup.md) — After re-import: run `pnpm install`, set `CLERK_PUBLISHABLE_KEY`+`VITE_CLERK_PUBLISHABLE_KEY` as env vars, request `CLERK_SECRET_KEY`/`GEMINI_API_KEY`/`OPENAI_API_KEY` as secrets. Do NOT set `VITE_CLERK_PROXY_URL` in dev.
 - [Chat AI provider](chat-ai-provider.md) — Chat routes use OpenAI GPT-4o-mini (OPENAI_API_KEY); Gemini code removed. IDOR fixes applied to GET messages and DELETE conversation routes.
 - [Separator component missing](shadcn-separator.md) — shadcn Separator is NOT installed; use `<div className="border-t border-slate-100" />` instead.
 - [Today's Log schema](todays-log-schema.md) — `daily_logs` table extended with sleep, body-check, food-by-meal, junk intake, isCompleted, customSections fields (pushed June 2026).
