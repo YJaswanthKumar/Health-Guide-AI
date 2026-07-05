@@ -1,0 +1,454 @@
+# ROLE
+
+You are a Senior Full Stack Architect and AI Integration Engineer.
+
+Your task is to modify the existing NutriWise AI project.
+
+Do NOT rebuild the application.
+
+Do NOT redesign the UI.
+
+Do NOT recreate the AI agents.
+
+Preserve the existing project wherever possible.
+
+The existing application was built assuming a single LLM. Convert it into a Multi-Agent AI application using the already deployed CrewAI agents.
+
+---
+
+# OBJECTIVE
+
+Transform the existing architecture into an AI Agent Orchestrated Healthcare Platform.
+
+The frontend becomes a presentation layer.
+
+The backend becomes the orchestrator.
+
+CrewAI becomes the intelligence layer.
+
+The backend is responsible for:
+
+- Building agent inputs
+- Calling CrewAI deployments
+- Receiving structured outputs
+- Updating database
+- Updating UI
+- Executing backend actions
+- Synchronizing application state
+
+The frontend MUST NEVER call CrewAI directly.
+
+---
+
+# EXISTING AGENTS
+
+Already deployed.
+
+DO NOT recreate.
+
+DO NOT simulate.
+
+DO NOT modify deployment endpoints.
+
+Use them as external AI services.
+
+Available Agents
+
+- Agent 1 : Medical Report Intelligence
+- Agent 2 : Conversational Health Assessment
+- Agent 3 : Intelligent Care Planner
+- Agent 4 : Emergency Navigator
+- Agent 5 : Nutrition RAG
+
+Deployment details are already available in the provided documentation.
+
+---
+
+# AGENT ORCHESTRATION
+
+Create a dedicated Agent Router.
+
+Responsibilities
+
+- Decide which agent should execute
+- Collect required data
+- Build JSON input
+- Invoke CrewAI endpoint
+- Validate response
+- Execute backend actions
+- Persist data
+- Return response to frontend
+
+Never expose CrewAI endpoints to frontend.
+
+---
+
+# AGENT INPUT CONTRACT
+
+The backend constructs the input.
+
+Never allow frontend to manually build CrewAI JSON.
+
+Example
+
+Input
+
+{
+    "user_profile": {},
+    "medical_conditions": [],
+    "current_medications": [],
+    "daily_logs": [],
+    "current_tasks": [],
+    "health_assessment": {},
+    "nutrition_plan": {},
+    "calendar": {},
+    "conversation_history": []
+}
+
+The backend gathers these from PostgreSQL before invoking an agent.
+
+---
+
+# AGENT OUTPUT CONTRACT
+
+Every CrewAI deployment returns structured JSON.
+
+Never parse natural language.
+
+Consume JSON only.
+
+Example
+
+{
+    "backend_actions": [],
+    "today_tasks": [],
+    "notifications": [],
+    "dashboard_companion": {},
+    "care_plan": {},
+    "warnings": [],
+    "recommendations": []
+}
+
+Backend interprets the JSON.
+
+Frontend only renders processed data.
+
+---
+
+# BACKEND ACTIONS
+
+Support backend actions including
+
+- CREATE_TASK
+- UPDATE_TASK
+- DELETE_TASK
+- COMPLETE_TASK
+- RESCHEDULE_TASK
+- CREATE_NOTIFICATION
+- UPDATE_CARE_PLAN
+- UPDATE_PROFILE
+- CREATE_DASHBOARD_MESSAGE
+- REFRESH_PROGRESS
+- SHOW_EMERGENCY_ALERT
+
+The backend executes these actions.
+
+Agents never modify database directly.
+
+---
+
+# NEW MODULE 1
+
+Task Manager
+
+Create a Task Manager module.
+
+Visible in
+
+- Dashboard
+- Plan Tracker
+
+Task properties
+
+- id
+- title
+- description
+- category
+- priority
+- due_time
+- recurrence
+- status
+- completed
+- source_agent
+- created_at
+- updated_at
+
+Supported operations
+
+- Create
+- Read
+- Update
+- Delete
+- Complete
+- Snooze
+- Archive
+- Reschedule
+
+Only Agent 3 decides task operations.
+
+Backend performs CRUD.
+
+Frontend automatically refreshes.
+
+---
+
+# NEW MODULE 2
+
+Dashboard Companion
+
+Create a persistent AI Companion widget.
+
+Position
+
+Top of Dashboard.
+
+Purpose
+
+Agent 3 proactively communicates with user.
+
+Examples
+
+"Have you taken your morning medicine?"
+
+"You forgot to log breakfast."
+
+"Your hydration has been low this week."
+
+"You have a doctor appointment tomorrow."
+
+Selecting the widget opens a dedicated Care Planner conversation page.
+
+Conversation history must be stored.
+
+Conversation must be reused.
+
+---
+
+# MODIFY EXISTING PAGES
+
+Do not replace pages.
+
+Extend existing pages.
+
+Dashboard
+
+- Add Dashboard Companion
+- Add Today's Tasks
+- Add Health Progress
+
+Plan Tracker
+
+- Synchronize with Task Manager
+- Show pending/completed tasks
+- Show care plan
+
+Profile
+
+- Show AI suggested profile updates
+- Require confirmation before saving
+
+Health Checkup
+
+- Route conversation to Agent 2
+- Support follow-up questioning
+
+Medical Reports
+
+- Route uploads to Agent 1
+
+Nutrition
+
+- Route questions to Agent 5
+
+Emergency
+
+- Route emergency requests to Agent 4
+
+---
+
+# AGENT ROUTING RULES
+
+Medical Report Upload
+
+Input
+
+PDF/Image/Text
+
+Invoke
+
+Agent 1
+
+Expected Output
+
+Medical summary
+Profile suggestions
+Severity
+Recommendations
+
+---------------------------------------------------
+
+Symptom Conversation
+
+Invoke
+
+Agent 2
+
+Expected Output
+
+Follow-up questions
+
+OR
+
+Completed assessment
+
+---------------------------------------------------
+
+Care Planning
+
+Invoke
+
+Agent 3
+
+Expected Output
+
+Tasks
+Care plan
+Notifications
+Dashboard message
+
+---------------------------------------------------
+
+Emergency
+
+Invoke
+
+Agent 4
+
+Expected Output
+
+Emergency assessment
+Nearby hospitals
+Emergency payload
+Notification payload
+
+---------------------------------------------------
+
+Nutrition
+
+Invoke
+
+Agent 5
+
+Expected Output
+
+Meal plan
+Nutrition recommendations
+Warnings
+Sources
+
+---
+
+# DATABASE
+
+Reuse current schema.
+
+Only extend when required.
+
+Possible new tables
+
+- tasks
+- planner_messages
+- notifications
+- progress_logs
+- conversation_history
+- emergency_contacts
+- agent_logs
+
+Do not delete existing tables.
+
+---
+
+# SYNCHRONIZATION
+
+Whenever Agent 3 updates tasks
+
+Synchronize
+
+- Dashboard
+- Plan Tracker
+- Progress Widgets
+
+Whenever Agent 1 updates profile suggestions
+
+Show confirmation dialog.
+
+Only update profile after confirmation.
+
+Whenever Agent 4 returns emergency output
+
+Display emergency banner.
+
+Generate notification.
+
+Store emergency log.
+
+Whenever Agent 5 returns meal plan
+
+Update care plan.
+
+Refresh nutrition section.
+
+---
+
+# ERROR HANDLING
+
+If CrewAI deployment fails
+
+- Retry
+- Log error
+- Return graceful response
+- Never crash application
+
+Validate every response before processing.
+
+---
+
+# SECURITY
+
+- Never expose CrewAI credentials
+- Backend owns all API keys
+- Validate all requests
+- Protect CRUD endpoints
+- Protect profile updates
+
+---
+
+# IMPLEMENTATION GOAL
+
+After implementation, the application should behave as a unified healthcare platform where multiple CrewAI agents collaborate through backend orchestration.
+
+The frontend should never know which agent was called.
+
+The user should experience a seamless application capable of:
+
+- Uploading reports
+- Conversational symptom assessment
+- Personalized nutrition
+- Intelligent care planning
+- Task management
+- Dashboard interaction
+- Emergency assistance
+
+without realizing that multiple AI agents are working together behind the scenes.
+
+Complete the integration across the entire project. Preserve existing functionality while extending it to support the multi-agent architecture.

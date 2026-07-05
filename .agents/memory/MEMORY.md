@@ -4,3 +4,4 @@
 - [Today's Log schema](todays-log-schema.md) — `daily_logs` table extended with sleep, body-check, food-by-meal, junk intake, isCompleted, customSections fields (pushed June 2026).
 - [Chat query key bug fix](chat-query-key.md) — `useGetConversationMessages` takes `id: number` directly; never pass `{id: number}` as first arg or as queryKey arg — causes cache mismatch and messages appear lost on navigation.
 - [Checkup auto-prompt flow](checkup-auto-prompt.md) — Profile doc "Analyze" navigates to `/checkup?prompt=<encoded>`; CheckupPage reads URL param on mount, auto-creates conversation, passes decoded string as `autoPrompt` prop to ChatInterface.
+- [Multi-agent CrewAI integration](multi-agent-crewai.md) — Agent3 powers Care Companion + Task Manager; kickoff+poll pattern; tasks/companion tables in DB; all agent calls are backend-only.

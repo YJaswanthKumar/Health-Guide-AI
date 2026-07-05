@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useLocation } from "wouter";
 import { useGetProfile, useListPlans, useGetTodayLog, getGetProfileQueryKey, getListPlansQueryKey, getGetTodayLogQueryKey } from "@workspace/api-client-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Stethoscope, CalendarHeart, BookOpen, Activity, CheckCircle2, Clock, ChevronRight, Droplets, Moon, Utensils, AlertCircle, UserCircle } from "lucide-react";
 import TodayLogModal, { type DailyLog } from "@/components/log/TodayLogModal";
 import { queryClient } from "@/lib/queryClient";
-import { useEffect } from "react";
+import CareCompanionWidget from "@/components/companion/CareCompanionWidget";
+import TodayTasksWidget, { type Task } from "@/components/tasks/TodayTasksWidget";
 
 function StatusPill({ completed }: { completed: boolean }) {
   return completed ? (
@@ -49,6 +50,8 @@ export default function DashboardPage() {
   const [, setLocation] = useLocation();
   const [logOpen, setLogOpen] = useState(false);
   const [fullLog, setFullLog] = useState<DailyLog | null>(null);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [tasksLoading, setTasksLoading] = useState(true);
 
   const { data: profile, isLoading: isLoadingProfile, error: profileError } = useGetProfile({
     query: { retry: false, queryKey: getGetProfileQueryKey() }
@@ -63,6 +66,20 @@ export default function DashboardPage() {
   useEffect(() => {
     if (profileError) setLocation("/onboarding");
   }, [profileError, setLocation]);
+
+  const fetchTasks = useCallback(async () => {
+    setTasksLoading(true);
+    try {
+      const res = await fetch("/api/tasks", { credentials: "include" });
+      if (res.ok) setTasks(await res.json());
+    } catch { /* ignore */ } finally {
+      setTasksLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (profile) fetchTasks();
+  }, [profile, fetchTasks]);
 
   const openLog = async () => {
     try {
@@ -83,6 +100,7 @@ export default function DashboardPage() {
     return (
       <div className="max-w-5xl mx-auto space-y-6">
         <Skeleton className="h-10 w-48 rounded-lg" />
+        <Skeleton className="h-16 w-full rounded-2xl" />
         <Skeleton className="h-40 w-full rounded-2xl" />
         <div className="grid grid-cols-2 gap-4">
           <Skeleton className="h-28 rounded-xl" />
@@ -123,6 +141,9 @@ export default function DashboardPage() {
         <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">Welcome back, {profile.name}</h1>
         <p className="text-slate-500 text-sm">Here's your health overview for today.</p>
       </div>
+
+      {/* ── Care Companion ── */}
+      <CareCompanionWidget />
 
       {/* Profile Incomplete Banner */}
       {profileStatus !== "complete" && (
@@ -182,6 +203,18 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </button>
+
+      {/* ── Today's Tasks ── */}
+      <Card className="border-slate-200 shadow-sm">
+        <CardContent className="p-5">
+          <TodayTasksWidget
+            tasks={tasks}
+            loading={tasksLoading}
+            onRefresh={fetchTasks}
+            onTasksChanged={fetchTasks}
+          />
+        </CardContent>
+      </Card>
 
       {/* Stats row — 2 cards: Profile + Active Plans */}
       <div className="grid grid-cols-2 gap-4">

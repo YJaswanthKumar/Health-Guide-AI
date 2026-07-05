@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useAuth } from "@clerk/react";
 import { useListPlans, useCreatePlan, useGetTodayLog, useListConversations, useCreateConversation, useGetConversationMessages, getGetTodayLogQueryKey, getGetConversationMessagesQueryKey } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,6 +18,8 @@ import ChatInterface from "@/components/chat/ChatInterface";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import TodayLogModal, { type DailyLog } from "@/components/log/TodayLogModal";
 import LogCalendar from "@/components/log/LogCalendar";
+import TaskListPanel from "@/components/tasks/TaskListPanel";
+import type { Task } from "@/components/tasks/TodayTasksWidget";
 
 const planSchema = z.object({
   title: z.string().min(2),
@@ -38,10 +40,12 @@ export default function PlannerPage() {
   const [showCalendar, setShowCalendar] = useState(false);
   const [calRefresh, setCalRefresh] = useState(0);
 
-  // Today's Log Modal
   const [logOpen, setLogOpen] = useState(false);
   const [logDate, setLogDate] = useState<string>(new Date().toISOString().split("T")[0]);
   const [selectedLog, setSelectedLog] = useState<DailyLog | null>(null);
+
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [tasksLoading, setTasksLoading] = useState(true);
 
   const plannerConvos = convos?.filter(c => c.mode === "planner") || [];
   const [activeConvoId, setActiveConvoId] = useState<number | null>(null);
@@ -50,6 +54,18 @@ export default function PlannerPage() {
     resolver: zodResolver(planSchema),
     defaultValues: { title: "", type: "custom", description: "" }
   });
+
+  const fetchTasks = useCallback(async () => {
+    setTasksLoading(true);
+    try {
+      const res = await fetch("/api/tasks", { credentials: "include" });
+      if (res.ok) setTasks(await res.json());
+    } catch { /* ignore */ } finally {
+      setTasksLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchTasks(); }, [fetchTasks]);
 
   const onPlanSubmit = (data: z.infer<typeof planSchema>) => {
     createPlan.mutate({ data }, {
@@ -112,7 +128,6 @@ export default function PlannerPage() {
 
   const isCompleted = !!(todayLog as DailyLog | undefined)?.isCompleted;
   const hasLog = !!todayLog;
-  const today = new Date().toISOString().split("T")[0];
 
   return (
     <div className="max-w-7xl mx-auto h-[calc(100vh-8rem)] flex flex-col lg:flex-row gap-6 animate-in fade-in duration-500">
@@ -125,7 +140,7 @@ export default function PlannerPage() {
               <CalendarHeart className="w-6 h-6 text-blue-700" />
               Plan Tracker
             </h1>
-            <p className="text-sm text-slate-500 mt-1">Manage plans, daily logs and past days</p>
+            <p className="text-sm text-slate-500 mt-1">Manage plans, tasks, and daily logs</p>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" className="gap-1.5 border-slate-200" onClick={() => setShowCalendar(p => !p)}>
@@ -194,7 +209,7 @@ export default function PlannerPage() {
                       <span className="text-sm font-bold text-slate-900">Today's Daily Log</span>
                       {isCompleted
                         ? <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200 text-[10px] gap-0.5 py-0"><CheckCircle2 size={9} /> Completed</Badge>
-                        : <Badge className="bg-amber-100 text-amber-800 border-amber-200 text-[10px] gap-0.5 py-0 animate-pulse"><Clock size={9} /> In Progress until midnight</Badge>
+                        : <Badge className="bg-amber-100 text-amber-800 border-amber-200 text-[10px] gap-0.5 py-0 animate-pulse"><Clock size={9} /> In Progress</Badge>
                       }
                     </div>
                     <p className="text-xs text-slate-500 mt-0.5">
@@ -254,34 +269,43 @@ export default function PlannerPage() {
         <div className="pb-8" />
       </div>
 
-      {/* Right Column: Assistant */}
-      <div className="w-full lg:w-[340px] flex-shrink-0 bg-white rounded-2xl shadow-sm border border-slate-200 h-[500px] lg:h-full overflow-hidden flex flex-col">
-        <div className="p-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-              <Bot className="w-4 h-4 text-blue-700" />
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold text-slate-900">Planner Assistant</h3>
-              <p className="text-[11px] text-slate-500 font-medium">Ask for routine suggestions</p>
+      {/* Right Column: Task Manager + Planner Assistant tabs */}
+      <div className="w-full lg:w-[360px] flex-shrink-0 h-[500px] lg:h-full flex flex-col gap-4">
+
+        {/* Task Manager Panel */}
+        <div className="flex-1 bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col min-h-0">
+          <TaskListPanel tasks={tasks} loading={tasksLoading} onRefresh={fetchTasks} />
+        </div>
+
+        {/* Planner Assistant */}
+        <div className="h-[280px] bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col flex-shrink-0">
+          <div className="p-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between flex-shrink-0">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                <Bot className="w-4 h-4 text-blue-700" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-slate-900">Planner Assistant</h3>
+                <p className="text-[11px] text-slate-500 font-medium">Ask for routine suggestions</p>
+              </div>
             </div>
           </div>
-        </div>
-        <div className="flex-1 overflow-hidden">
-          {activeConvoId ? (
-            <PlannerChat conversationId={activeConvoId} />
-          ) : (
-            <div className="h-full flex flex-col items-center justify-center p-8 text-center bg-white">
-              <Bot className="w-12 h-12 text-slate-200 mb-4" />
-              <h4 className="text-slate-700 font-medium mb-2">Need help planning?</h4>
-              <p className="text-sm text-slate-500 mb-6 leading-relaxed">
-                The assistant can help design a diet plan, optimize your sleep schedule, or suggest workout routines.
-              </p>
-              <Button onClick={startAssistant} className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm w-full">
-                Start Assistant
-              </Button>
-            </div>
-          )}
+          <div className="flex-1 overflow-hidden">
+            {activeConvoId ? (
+              <PlannerChat conversationId={activeConvoId} />
+            ) : (
+              <div className="h-full flex flex-col items-center justify-center p-6 text-center bg-white">
+                <Bot className="w-10 h-10 text-slate-200 mb-3" />
+                <h4 className="text-slate-700 font-medium mb-1 text-sm">Need help planning?</h4>
+                <p className="text-xs text-slate-500 mb-4 leading-relaxed">
+                  The assistant can help design a diet plan or suggest workout routines.
+                </p>
+                <Button onClick={startAssistant} className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm w-full" size="sm">
+                  Start Assistant
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

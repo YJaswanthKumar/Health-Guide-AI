@@ -1,0 +1,53 @@
+This project was originally built around a single LLM (Gemini/OpenAI) where every AI interaction was handled as a chatbot response. I now want to transform the entire application into an AI Agent-based architecture using my published CrewAI agents.
+
+The existing UI, authentication, database, and modules should be preserved wherever possible, but the AI layer must be redesigned. Instead of calling a single LLM, the backend should communicate with an Agent Router that invokes the appropriate CrewAI agent based on the user's action or workflow.
+
+The agents have already been built, published, and deployed. Their deployment details, inputs, outputs, and responsibilities are available in the attached documentation. Do not recreate or modify the agents. Instead, integrate them into the current project.
+
+The backend should become the orchestrator between the frontend, database, and CrewAI agents. Agents must never directly modify the database or UI. Instead, every agent returns structured JSON containing recommendations and backend actions. The backend validates these actions, performs database updates, and refreshes the UI.
+
+The application should be refactored so that every module can communicate with the agents:
+
+Health Checkup → Agent 1 (Medical Report Intelligence) and Agent 2 (Conversational Health Assessment).
+Plan Tracker → Agent 3 (Care Planner).
+Emergency → Agent 4 (Emergency Navigator).
+Nutrition / Education → Agent 5 (Nutrition RAG).
+
+Add a new Task Manager module.
+
+This module should be accessible from:
+
+The Dashboard (Today's Tasks widget).
+The Plan Tracker page.
+A dedicated Task Manager page.
+
+The Care Planner Agent (Agent 3) should manage this module by generating structured CRUD actions. It should be able to:
+
+Create tasks.
+Update tasks.
+Delete tasks.
+Mark tasks as completed.
+Modify priorities and schedules.
+
+Examples include medication reminders, hydration reminders, exercise tasks, meal reminders, appointment reminders, sleep goals, and recovery activities. These tasks should be stored in the database and synchronized across the Dashboard and Plan Tracker.
+
+Add another new Dashboard component called Care Companion.
+
+This should appear at the very top of the Dashboard and act as a persistent conversation with the Care Planner Agent.
+
+This is not a generic chatbot. It is a proactive AI caregiver that continuously interacts with the user based on:
+
+Current care plan.
+Medication schedule.
+Daily logs.
+Health assessment.
+Nutrition recommendations.
+Previous conversations.
+Recovery progress.
+Missed tasks.
+
+The Care Companion should initiate conversations when appropriate, ask follow-up questions, encourage healthy habits, remind the user about important actions, and adapt recommendations based on new information. It should maintain conversation history so future interactions are personalized and contextual.
+
+The backend should implement an Agent Router that receives frontend requests, gathers the required user data, constructs the JSON payload expected by each CrewAI agent, invokes the deployed CrewAI workflow, parses the response, executes backend actions (database updates, task management, notifications, profile updates), and returns structured responses to the frontend.
+
+Preserve the existing UI where possible, but modify it to support these new AI-driven workflows. Ensure all modules remain responsive, cohesive, and work together as a single intelligent healthcare platform.

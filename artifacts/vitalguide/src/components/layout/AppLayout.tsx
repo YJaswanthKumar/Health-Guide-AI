@@ -1,7 +1,7 @@
 import React from "react";
 import { Link, useLocation } from "wouter";
 import { useClerk, useUser } from "@clerk/react";
-import { HeartPulse, LayoutDashboard, Stethoscope, CalendarHeart, BookOpen, LogOut, UserCircle } from "lucide-react";
+import { HeartPulse, LayoutDashboard, Stethoscope, CalendarHeart, BookOpen, LogOut, UserCircle, MessageCircleHeart } from "lucide-react";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
@@ -10,6 +10,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   const navItems = [
     { name: "Dashboard", path: "/dashboard", icon: <LayoutDashboard className="w-5 h-5" /> },
+    { name: "Care Companion", path: "/companion", icon: <MessageCircleHeart className="w-5 h-5" /> },
     { name: "Health Checkup", path: "/checkup", icon: <Stethoscope className="w-5 h-5" /> },
     { name: "Plan Tracker", path: "/planner", icon: <CalendarHeart className="w-5 h-5" /> },
     { name: "Health Education", path: "/educate", icon: <BookOpen className="w-5 h-5" /> },
@@ -17,10 +18,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   const mobileNavItems = [
     { name: "Home", path: "/dashboard", icon: <LayoutDashboard className="w-5 h-5" /> },
+    { name: "Companion", path: "/companion", icon: <MessageCircleHeart className="w-5 h-5" /> },
     { name: "Checkup", path: "/checkup", icon: <Stethoscope className="w-5 h-5" /> },
     { name: "Planner", path: "/planner", icon: <CalendarHeart className="w-5 h-5" /> },
     { name: "Learn", path: "/educate", icon: <BookOpen className="w-5 h-5" /> },
-    { name: "Profile", path: "/profile", icon: <UserCircle className="w-5 h-5" /> },
   ];
 
   const initials = user?.firstName

@@ -5,6 +5,8 @@ import plansRouter from "./plans";
 import logsRouter from "./logs";
 import chatRouter from "./chat";
 import documentsRouter from "./documents";
+import tasksRouter from "./tasks";
+import companionRouter from "./companion";
 
 const router: IRouter = Router();
 
@@ -14,5 +16,7 @@ router.use("/plans", plansRouter);
 router.use("/logs", logsRouter);
 router.use("/chat", chatRouter);
 router.use("/documents", documentsRouter);
+router.use("/tasks", tasksRouter);
+router.use("/companion", companionRouter);
 
 export default router;

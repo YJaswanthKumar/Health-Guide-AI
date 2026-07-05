@@ -13,6 +13,7 @@ import CheckupPage from "./pages/CheckupPage";
 import PlannerPage from "./pages/PlannerPage";
 import EducatePage from "./pages/EducatePage";
 import ProfilePage from "./pages/ProfilePage";
+import CompanionPage from "./pages/CompanionPage";
 import AppLayout from "./components/layout/AppLayout";
 
 const clerkPubKey = publishableKeyFromHost(
@@ -139,6 +140,14 @@ function AppRoutes() {
         <Show when="signed-in">
           <AppLayout>
             <ProfilePage />
+          </AppLayout>
+        </Show>
+        <Show when="signed-out"><Redirect to="/" /></Show>
+      </Route>
+      <Route path="/companion">
+        <Show when="signed-in">
+          <AppLayout>
+            <CompanionPage />
           </AppLayout>
         </Show>
         <Show when="signed-out"><Redirect to="/" /></Show>
