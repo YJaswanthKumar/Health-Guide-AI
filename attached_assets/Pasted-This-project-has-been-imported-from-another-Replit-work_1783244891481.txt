@@ -1,0 +1,135 @@
+This project has been imported from another Replit workspace because the previous workspace reached its AI usage limit.
+
+IMPORTANT:
+
+This is NOT a new project.
+
+Do NOT redesign the architecture.
+Do NOT recreate existing functionality.
+Do NOT replace completed implementations.
+
+Before making any changes:
+
+1. Read README.md completely.
+2. Read PROGRESS.md completely.
+3. Read the current codebase.
+4. Verify the latest implementation state against the code.
+
+The previous development session already completed the following work:
+
+========================================
+COMPLETED
+========================================
+
+Phase 2
+✓ Multi-Agent architecture
+✓ Agent Router
+✓ Agent 2 integration
+✓ Agent 3 integration
+✓ Agent 4 integration
+✓ Dashboard Companion
+✓ Task Manager
+✓ Plan Tracker
+✓ Care Companion
+✓ Profile Update workflow
+
+Latest Session
+
+✓ Fixed Complete Profile redirect bug
+✓ Fixed Dashboard onboarding redirect
+✓ Added React Query cache synchronization
+✓ Added timeout protection for Gemini document extraction
+✓ Backend restarted and verified
+
+✓ Extended Plan database schema
+✓ Added plan progress calculations
+✓ Added completed days
+✓ Added remaining days
+✓ Added progress percentage
+✓ Added plan duration
+✓ Fixed logDate issues
+
+✓ Redesigned Planner page
+
+Including:
+
+- progress indicators
+- edit
+- delete
+- calendar modal
+- progress display
+
+✓ Dashboard summary cards
+
+✓ Agent 3 CRUD helper
+
+✓ Wired Agent 3 helper into:
+
+- companion.ts
+- tasks.ts
+- checkup.ts
+
+========================================
+STOPPED HERE
+========================================
+
+The previous workspace stopped while implementing the Agent 3 integration updates.
+
+The remaining work from that session is:
+
+1. Locate the Agent 3 backend service and CrewAI integration.
+2. Update the Agent 3 system prompt / request format so it understands the new Action Plan model.
+
+Agent 3 must now generate plans using the new schema including:
+
+- title
+- description
+- category
+- start_date
+- end_date
+- duration_days
+- completed_days
+- remaining_days
+- progress_percentage
+- current_day
+- status
+- associated tasks
+
+instead of only generating simple task lists.
+
+After updating Agent 3:
+
+- verify Agent Router compatibility
+- verify backend parsing
+- verify dashboard rendering
+- verify planner rendering
+
+Then perform a complete end-to-end verification of:
+
+✓ Signup
+✓ Complete Profile
+✓ Document Upload
+✓ Dashboard
+✓ Care Companion
+✓ Health Checkup
+✓ Plan Tracker
+✓ Task Manager
+✓ Agent 3 integration
+✓ Database persistence after refresh
+✓ Database persistence after logout/login
+
+If you discover any regression, fix it before continuing.
+
+Only after everything above is verified should you continue implementing the remaining Phase 3 enhancements.
+
+Finally:
+
+- update README.md
+- update PROGRESS.md
+- document every modified file
+- document every schema change
+- document every new API
+
+Continue from exactly this point.
+
+Do NOT repeat already completed work.
