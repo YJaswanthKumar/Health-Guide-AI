@@ -1,0 +1,72 @@
+Yes. Implement the complete Health Checkup AI workflow. Do not implement only a simple API call. Integrate it completely into the existing architecture.
+
+Requirements:
+
+1. Replace the current LLM chat implementation in the Health Checkup page with the deployed CrewAI Health Assessment Agent.
+
+2. The Health Checkup page should support conversational symptom assessment.
+
+3. The frontend should behave like a real consultation:
+   - User enters symptoms.
+   - Backend sends the required JSON to Agent 2.
+   - If Agent 2 returns a follow-up question, display it and wait for the user's response.
+   - Continue until Agent 2 returns ASSESSMENT_COMPLETE.
+   - Preserve the entire conversation history.
+   - Never lose context between messages.
+
+4. When the assessment is complete:
+   - Display the complete assessment in the UI.
+   - Show Possible Causes.
+   - Show Recovery Suggestions.
+   - Show Food & Nutrition Recommendations.
+   - Show Medication Guidance.
+   - Show Doctor Recommendation.
+   - Show Warning Signs.
+
+5. If the assessment contains profile update suggestions:
+   - Never update the profile automatically.
+   - Display a confirmation dialog.
+   - Only update the database after user confirmation.
+
+6. If the assessment indicates emergency severity:
+   - Automatically invoke Agent 4 through the backend.
+   - Do not ask the frontend to call Agent 4.
+   - Agent Router must handle this.
+
+7. Agent 4 response should:
+   - Display an Emergency Alert banner.
+   - Show first aid instructions.
+   - Show nearby hospitals.
+   - Show recommended specialists.
+   - Show emergency contact actions.
+   - Show emergency disclaimer.
+
+8. If the assessment contains nutrition recommendations:
+   - Automatically invoke Agent 5.
+   - Retrieve personalized nutrition guidance.
+   - Display meal recommendations inside the assessment page.
+
+9. If the assessment affects long-term care:
+   - Automatically invoke Agent 3.
+   - Generate new tasks.
+   - Generate updated care plan.
+   - Refresh Dashboard.
+   - Refresh Task Manager.
+   - Refresh Plan Tracker.
+
+10. Preserve the existing UI where possible.
+    Improve it instead of replacing it.
+
+11. Follow the existing multi-agent architecture.
+    Frontend must never call CrewAI directly.
+    All orchestration must happen inside the backend Agent Router.
+
+12. Update PROGRESS.md after implementation with:
+    - modified files
+    - new APIs
+    - routing logic
+    - data flow
+    - testing instructions
+    - remaining work
+
+Do not stop after the first successful API call. Complete the entire workflow until the Health Checkup module is fully integrated into the multi-agent architecture.

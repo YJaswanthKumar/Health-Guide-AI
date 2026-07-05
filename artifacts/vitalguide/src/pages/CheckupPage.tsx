@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import { useListConversations, useGetConversationMessages, useCreateConversation, getListConversationsQueryKey, getGetConversationMessagesQueryKey } from "@workspace/api-client-react";
-import ChatInterface, { type ChatInterfaceHandle } from "@/components/chat/ChatInterface";
+import CheckupChatInterface, { type CheckupChatHandle } from "@/components/checkup/CheckupChatInterface";
 import { Button } from "@/components/ui/button";
-import { Stethoscope, Plus, MessageSquare, Trash2, Upload, FileText, ShieldCheck, UserX } from "lucide-react";
+import { Stethoscope, Plus, MessageSquare, Trash2, Upload, FileText, ShieldCheck, UserX, Sparkles } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -74,7 +74,7 @@ function formatDocForChat(doc: DocUploadResult, isOwner: boolean): string {
 
   lines.push("");
   if (isOwner) {
-    lines.push("This is my document. Could you help me understand what these results mean for my health and what I should be aware of?");
+    lines.push("This is my document. Please analyze these results and assess my health status, any concerns I should be aware of, and what follow-up actions I should take.");
   } else {
     lines.push("This document belongs to someone else (not me). Could you help me understand the medical information in it?");
   }
@@ -130,7 +130,7 @@ function DocumentUploadButton({
   chatRef,
 }: {
   conversationId: number | null;
-  chatRef: React.RefObject<ChatInterfaceHandle | null>;
+  chatRef: React.RefObject<CheckupChatHandle | null>;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -212,7 +212,7 @@ export default function CheckupPage() {
   const { data: conversations, isLoading: isLoadingConvos } = useListConversations();
   const createConversation = useCreateConversation();
   const { toast } = useToast();
-  const chatRef = useRef<ChatInterfaceHandle | null>(null);
+  const chatRef = useRef<CheckupChatHandle | null>(null);
 
   const checkupConvos = conversations?.filter(c => c.mode === "checkup") || [];
   const [activeId, setActiveId] = useState<number | null>(null);
@@ -231,9 +231,6 @@ export default function CheckupPage() {
     const params = new URLSearchParams(window.location.search);
     const prompt = params.get("prompt");
     if (prompt) {
-      // URLSearchParams.get() already decodes percent-encoding once.
-      // Calling decodeURIComponent() again would double-decode and crash on
-      // strings that contain a literal "%" (e.g. "95% saturation").
       setPendingPrompt(prompt);
       window.history.replaceState({}, "", "/checkup");
       createConversation.mutate(
@@ -289,6 +286,12 @@ export default function CheckupPage() {
           </Button>
         </div>
 
+        {/* Agent badge */}
+        <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-teal-50 border border-teal-100 rounded-lg">
+          <Sparkles className="w-3 h-3 text-teal-600 flex-shrink-0" />
+          <span className="text-[11px] font-medium text-teal-700">Powered by Agent 2 + 4 + 5</span>
+        </div>
+
         <DocumentUploadButton conversationId={effectiveId} chatRef={chatRef} />
 
         <div className="flex-1 overflow-y-auto space-y-1 min-h-0">
@@ -324,6 +327,24 @@ export default function CheckupPage() {
             ))
           )}
         </div>
+
+        {/* How it works */}
+        <div className="bg-slate-50 border border-slate-100 rounded-xl px-3 py-3">
+          <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide mb-1.5">How it works</p>
+          <ol className="space-y-1">
+            {[
+              "Describe your symptoms",
+              "Agent asks follow-up Qs",
+              "Full assessment generated",
+              "Emergency + nutrition AI triggered automatically",
+            ].map((s, i) => (
+              <li key={i} className="flex items-start gap-1.5 text-[11px] text-slate-500">
+                <span className="flex-shrink-0 w-4 h-4 bg-teal-100 text-teal-700 rounded-full flex items-center justify-center text-[9px] font-bold mt-0.5">{i + 1}</span>
+                {s}
+              </li>
+            ))}
+          </ol>
+        </div>
       </div>
 
       {/* Chat Area */}
@@ -335,7 +356,13 @@ export default function CheckupPage() {
             </div>
             <div>
               <h3 className="font-semibold text-slate-700 mb-1">Start a Health Checkup</h3>
-              <p className="text-sm text-slate-500 max-w-xs">Describe your symptoms or upload a medical document to get personalized health guidance.</p>
+              <p className="text-sm text-slate-500 max-w-xs">
+                Describe your symptoms to the AI Health Assessment Agent. It will ask follow-up questions and generate a personalized assessment.
+              </p>
+            </div>
+            <div className="flex items-center gap-1.5 bg-teal-50 border border-teal-100 rounded-full px-4 py-2">
+              <Sparkles className="w-3.5 h-3.5 text-teal-600" />
+              <span className="text-xs font-medium text-teal-700">Agents 2, 4 & 5 — Health Assessment, Emergency & Nutrition</span>
             </div>
             <Button onClick={handleNew} disabled={createConversation.isPending} className="bg-teal-600 hover:bg-teal-700 text-white gap-2">
               <Plus className="w-4 h-4" />
@@ -349,10 +376,9 @@ export default function CheckupPage() {
             <Skeleton className="h-16 w-3/4 rounded-xl" />
           </div>
         ) : (
-          <ChatInterface
+          <CheckupChatInterface
             ref={chatRef}
             conversationId={effectiveId}
-            mode="checkup"
             initialMessages={msgs ?? []}
             autoPrompt={pendingPrompt ?? undefined}
           />

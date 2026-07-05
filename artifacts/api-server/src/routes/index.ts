@@ -7,6 +7,7 @@ import chatRouter from "./chat";
 import documentsRouter from "./documents";
 import tasksRouter from "./tasks";
 import companionRouter from "./companion";
+import checkupAgentRouter from "./checkup";
 
 const router: IRouter = Router();
 
@@ -18,5 +19,6 @@ router.use("/chat", chatRouter);
 router.use("/documents", documentsRouter);
 router.use("/tasks", tasksRouter);
 router.use("/companion", companionRouter);
+router.use("/checkup-agent", checkupAgentRouter);
 
 export default router;
