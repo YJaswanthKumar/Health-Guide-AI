@@ -1,3 +1,4 @@
+- [Auth token getter not wired up](auth-token-getter.md) — setAuthTokenGetter must be called inside ClerkProvider via ClerkAuthTokenRegistrar; without it all customFetch calls send no Authorization header → 401.
 - [Replit artifact workflow conflict](artifact-workflow-conflict.md) — `artifacts/api-server: API Server` owns port 8080; `Backend API` custom workflow conflicts and must not be restarted.
 - [Education Agent 5 route](education-agent5-route.md) — Education chats use `/api/education-agent` (JSON, not SSE); Agent 5 kickoff+poll with Gemini fallback; `EduConvo` type extends `Conversation` with optional `updatedAt`.
 - [Clerk env setup](clerk-env-setup.md) — After re-import: run `pnpm install`, set `CLERK_PUBLISHABLE_KEY`+`VITE_CLERK_PUBLISHABLE_KEY` as env vars, request `CLERK_SECRET_KEY`/`GEMINI_API_KEY`/`OPENAI_API_KEY` as secrets. Do NOT set `VITE_CLERK_PROXY_URL` in dev.
