@@ -3,7 +3,7 @@ import { useListConversations, useGetConversationMessages, useCreateConversation
 import CheckupChatInterface, { type CheckupChatHandle } from "@/components/checkup/CheckupChatInterface";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Stethoscope, Plus, MessageSquare, Trash2, Upload, FileText, ShieldCheck, UserX, Sparkles, Search, Menu, X, Clock } from "lucide-react";
+import { Stethoscope, Plus, MessageSquare, Trash2, Upload, FileText, ShieldCheck, UserX, Sparkles, Search, Menu, X, Clock, Pencil, Check } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -248,6 +248,9 @@ export default function CheckupPage() {
   const [activeId, setActiveId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [pendingPrompt, setPendingPrompt] = useState<string | null>(null);
+  const [renamingId, setRenamingId] = useState<number | null>(null);
+  const [renameValue, setRenameValue] = useState("");
+  const [renameSaving, setRenameSaving] = useState(false);
 
   const activeConvo = checkupConvos.find(c => c.id === activeId) ?? checkupConvos[0] ?? null;
   const effectiveId = activeId ?? activeConvo?.id ?? null;
@@ -309,6 +312,37 @@ export default function CheckupPage() {
     }
   };
 
+  const startRename = (id: number, currentTitle: string) => {
+    setRenamingId(id);
+    setRenameValue(currentTitle);
+  };
+
+  const cancelRename = () => {
+    setRenamingId(null);
+    setRenameValue("");
+  };
+
+  const saveRename = async (id: number) => {
+    const title = renameValue.trim();
+    if (!title) return cancelRename();
+    setRenameSaving(true);
+    try {
+      const res = await fetch(`/api/conversations/${id}`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title }),
+      });
+      if (!res.ok) throw new Error("Rename failed");
+      queryClient.invalidateQueries({ queryKey: getListConversationsQueryKey() });
+    } catch {
+      toast({ title: "Failed to rename", variant: "destructive" });
+    } finally {
+      setRenameSaving(false);
+      cancelRename();
+    }
+  };
+
   const SidebarContent = () => (
     <div className="flex flex-col h-full gap-3 p-4 md:p-0">
       <div className="flex items-center justify-between">
@@ -359,26 +393,71 @@ export default function CheckupPage() {
           filteredConvos.map(c => (
             <div
               key={c.id}
-              className={`group flex items-start justify-between gap-1 px-3 py-2.5 rounded-lg cursor-pointer transition-colors ${
+              className={`group flex items-start justify-between gap-1 px-3 py-2.5 rounded-lg transition-colors ${
+                renamingId === c.id ? "" : "cursor-pointer"
+              } ${
                 (effectiveId === c.id) ? "bg-teal-50 border border-teal-100 text-teal-700" : "hover:bg-slate-100 text-slate-700 border border-transparent"
               }`}
-              onClick={() => handleSelectConvo(c.id)}
+              onClick={() => { if (renamingId !== c.id) handleSelectConvo(c.id); }}
             >
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-medium truncate">{c.title}</p>
-                <p className="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5">
-                  <Clock className="w-2.5 h-2.5" />
-                  {formatRelativeTime(String(c.updatedAt ?? c.createdAt))}
-                </p>
-              </div>
-              <button
-                type="button"
-                className="opacity-0 group-hover:opacity-100 p-1 hover:text-red-500 transition-all flex-shrink-0 mt-0.5"
-                onClick={e => { e.stopPropagation(); handleDelete(c.id); }}
-                disabled={deletingId === c.id}
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-              </button>
+              {renamingId === c.id ? (
+                <div className="flex-1 min-w-0 flex items-center gap-1" onClick={e => e.stopPropagation()}>
+                  <Input
+                    autoFocus
+                    value={renameValue}
+                    onChange={e => setRenameValue(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === "Enter") saveRename(c.id);
+                      if (e.key === "Escape") cancelRename();
+                    }}
+                    className="h-7 text-xs border-teal-200"
+                    disabled={renameSaving}
+                  />
+                  <button
+                    type="button"
+                    className="p-1 text-teal-600 hover:text-teal-800 flex-shrink-0"
+                    onClick={() => saveRename(c.id)}
+                    disabled={renameSaving}
+                  >
+                    <Check className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    className="p-1 text-slate-400 hover:text-slate-600 flex-shrink-0"
+                    onClick={cancelRename}
+                    disabled={renameSaving}
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium truncate">{c.title}</p>
+                    <p className="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5">
+                      <Clock className="w-2.5 h-2.5" />
+                      {formatRelativeTime(String(c.updatedAt ?? c.createdAt))}
+                    </p>
+                  </div>
+                  <div className="flex items-center opacity-0 group-hover:opacity-100 transition-all flex-shrink-0">
+                    <button
+                      type="button"
+                      className="p-1 hover:text-teal-600 mt-0.5"
+                      onClick={e => { e.stopPropagation(); startRename(c.id, c.title); }}
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      className="p-1 hover:text-red-500 mt-0.5"
+                      onClick={e => { e.stopPropagation(); handleDelete(c.id); }}
+                      disabled={deletingId === c.id}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           ))
         )}

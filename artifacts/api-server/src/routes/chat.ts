@@ -81,6 +81,27 @@ router.delete("/conversations/:id", async (req, res) => {
   }
 });
 
+router.patch("/conversations/:id", async (req, res) => {
+  const { userId } = getAuth(req);
+  if (!userId) return res.status(401).json({ error: "Unauthorized" });
+  const id = Number(req.params.id);
+  if (isNaN(id)) return res.status(400).json({ error: "Invalid id" });
+  const title = typeof req.body?.title === "string" ? req.body.title.trim() : "";
+  if (!title) return res.status(400).json({ error: "Title is required" });
+  try {
+    const updated = await db
+      .update(conversations)
+      .set({ title, updatedAt: new Date() })
+      .where(and(eq(conversations.id, id), eq(conversations.clerkUserId, userId)))
+      .returning();
+    if (!updated.length) return res.status(404).json({ error: "Conversation not found" });
+    return res.json(updated[0]);
+  } catch (err) {
+    logger.error({ err }, "Failed to rename conversation");
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 router.get("/conversations", async (req, res) => {
   const { userId } = getAuth(req);
   if (!userId) return res.status(401).json({ error: "Unauthorized" });
