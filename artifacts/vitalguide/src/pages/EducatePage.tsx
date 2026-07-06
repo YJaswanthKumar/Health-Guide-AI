@@ -2,125 +2,312 @@ import { useState, useEffect } from "react";
 import { useListConversations, useGetConversationMessages, useCreateConversation, getGetConversationMessagesQueryKey, getListConversationsQueryKey } from "@workspace/api-client-react";
 import ChatInterface from "@/components/chat/ChatInterface";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Plus, MessageSquare, ArrowRight, Lightbulb } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { BookOpen, Plus, MessageSquare, Menu, X, Search, Clock, Sparkles } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { queryClient } from "@/lib/queryClient";
+
+const TOPICS = [
+  {
+    id: "nutrition",
+    title: "Nutrition",
+    icon: "🥗",
+    color: "from-green-50 to-emerald-50 border-green-200 hover:border-green-400",
+    badge: "bg-green-100 text-green-700",
+    desc: "Macronutrients, vitamins, meal planning & healthy eating habits",
+    prompt: "I want to learn about nutrition. Can you explain the fundamentals of healthy eating, macronutrients, and how diet affects overall health?",
+  },
+  {
+    id: "exercise",
+    title: "Exercise & Fitness",
+    icon: "🏃",
+    color: "from-orange-50 to-amber-50 border-orange-200 hover:border-orange-400",
+    badge: "bg-orange-100 text-orange-700",
+    desc: "Workouts, fitness science, strength, cardio & recovery",
+    prompt: "Explain the science of exercise and fitness. What are the key principles for building strength, improving cardio, and recovering well?",
+  },
+  {
+    id: "mental-health",
+    title: "Mental Health",
+    icon: "🧠",
+    color: "from-purple-50 to-violet-50 border-purple-200 hover:border-purple-400",
+    badge: "bg-purple-100 text-purple-700",
+    desc: "Stress management, sleep, anxiety & mindfulness",
+    prompt: "Help me understand mental health better. What are the key factors that affect mental wellbeing, and what evidence-based strategies can I use to manage stress and anxiety?",
+  },
+  {
+    id: "healthy-lifestyle",
+    title: "Healthy Lifestyle",
+    icon: "🌿",
+    color: "from-teal-50 to-cyan-50 border-teal-200 hover:border-teal-400",
+    badge: "bg-teal-100 text-teal-700",
+    desc: "Daily habits, prevention, hydration & wellness routines",
+    prompt: "What does a truly healthy lifestyle look like? Teach me the science-backed fundamentals of daily habits, hydration, sleep, and preventive health.",
+  },
+  {
+    id: "medical-reports",
+    title: "Medical Reports",
+    icon: "📋",
+    color: "from-blue-50 to-sky-50 border-blue-200 hover:border-blue-400",
+    badge: "bg-blue-100 text-blue-700",
+    desc: "Reading lab results, blood work & understanding tests",
+    prompt: "Help me understand how to read and interpret common medical reports and lab results. What are the key values I should pay attention to in a standard blood test?",
+  },
+  {
+    id: "medication-safety",
+    title: "Medication Safety",
+    icon: "💊",
+    color: "from-red-50 to-rose-50 border-red-200 hover:border-red-400",
+    badge: "bg-red-100 text-red-700",
+    desc: "Side effects, drug interactions, dosage & safety",
+    prompt: "What do I need to know about medication safety? Explain how to manage side effects, understand drug interactions, and follow safe dosage practices.",
+  },
+];
+
+function formatRelativeTime(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  const hours = Math.floor(diff / 3600000);
+  const days = Math.floor(diff / 86400000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  if (hours < 24) return `${hours}h ago`;
+  if (days < 7) return `${days}d ago`;
+  return new Date(dateStr).toLocaleDateString();
+}
 
 export default function EducatePage() {
   const { data: conversations, isLoading: isLoadingConvos } = useListConversations({ query: { queryKey: getListConversationsQueryKey() } });
   const createConversation = useCreateConversation();
-  
-  const eduConvos = conversations?.filter(c => c.mode === "education") || [];
-  const [activeId, setActiveId] = useState<number | null>(null);
 
-  const handleNew = () => {
-    createConversation.mutate({ data: { mode: "education", title: "New Learning Session" } }, {
-      onSuccess: (data) => {
-        setActiveId(data.id);
-        queryClient.invalidateQueries({ queryKey: ["/api/chat/conversations"] });
-      }
-    });
-  };
+  const eduConvos = (conversations?.filter(c => c.mode === "education") ?? [])
+    .slice()
+    .sort((a, b) => new Date(b.updatedAt ?? b.createdAt).getTime() - new Date(a.updatedAt ?? a.createdAt).getTime());
+
+  const [activeId, setActiveId] = useState<number | null>(null);
+  const [autoPrompt, setAutoPrompt] = useState<string | undefined>(undefined);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     if (!activeId && eduConvos.length > 0) {
-      setActiveId(eduConvos[eduConvos.length - 1].id);
+      setActiveId(eduConvos[0].id);
     }
   }, [activeId, eduConvos]);
 
-  const starterQuestions = [
-    { title: "Intermittent Fasting", desc: "What are the scientific benefits of intermittent fasting?", icon: "🕒" },
-    { title: "Sleep & Immunity", desc: "How exactly does deep sleep affect immune function?", icon: "💤" },
-    { title: "Heart-Healthy Diet", desc: "Explain the basics of a heart-healthy diet", icon: "❤️" },
-    { title: "Exercise Science", desc: "What is the difference between aerobic and anaerobic exercise?", icon: "🏃" }
-  ];
+  const filteredConvos = search.trim()
+    ? eduConvos.filter(c => c.title.toLowerCase().includes(search.toLowerCase()))
+    : eduConvos;
 
-  return (
-    <div className="max-w-6xl mx-auto h-[calc(100vh-8rem)] flex flex-col md:flex-row gap-6 animate-in fade-in duration-500">
-      <div className="w-full md:w-72 flex-shrink-0 flex flex-col gap-5">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2 tracking-tight">
-            <BookOpen className="w-6 h-6 text-indigo-700" />
-            Education
-          </h1>
-          <p className="text-sm text-slate-500 mt-1">Explore medical science & wellness</p>
-        </div>
-        
-        <Button 
-          onClick={handleNew} 
-          disabled={createConversation.isPending} 
-          className="w-full justify-start bg-white border border-indigo-200 text-indigo-800 hover:bg-indigo-50 hover:text-indigo-900 shadow-sm"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Start New Topic
-        </Button>
+  const startTopic = (topic: typeof TOPICS[number]) => {
+    createConversation.mutate(
+      { data: { mode: "education", title: topic.title } },
+      {
+        onSuccess: (data) => {
+          setActiveId(data.id);
+          setAutoPrompt(topic.prompt);
+          queryClient.invalidateQueries({ queryKey: getListConversationsQueryKey() });
+          setSidebarOpen(false);
+        }
+      }
+    );
+  };
 
-        <div className="flex-1 overflow-y-auto space-y-1.5 pr-2 custom-scrollbar">
-          {isLoadingConvos ? (
-            Array(4).fill(0).map((_, i) => <Skeleton key={i} className="h-11 w-full rounded-md" />)
-          ) : (
-            [...eduConvos].reverse().map(c => (
-              <button 
-                key={c.id}
-                onClick={() => setActiveId(c.id)}
-                className={`w-full text-left px-3.5 py-2.5 text-sm rounded-lg truncate transition-all flex items-center gap-3 border ${
-                  activeId === c.id 
-                    ? "bg-indigo-50 border-indigo-200 text-indigo-900 font-medium shadow-sm" 
-                    : "bg-transparent border-transparent text-slate-600 hover:bg-slate-100"
-                }`}
-              >
-                <MessageSquare className={`w-4 h-4 shrink-0 ${activeId === c.id ? "text-indigo-600" : "text-slate-400"}`} />
-                <span className="truncate">{c.title || "Education Session"}</span>
-              </button>
-            ))
-          )}
-          {!isLoadingConvos && eduConvos.length === 0 && (
-            <div className="text-sm text-slate-500 text-center py-6 px-4 bg-slate-50 rounded-lg border border-slate-100">
-              No topics explored yet. Start a new one above.
-            </div>
-          )}
+  const handleNew = () => {
+    createConversation.mutate(
+      { data: { mode: "education", title: "Learning Session" } },
+      {
+        onSuccess: (data) => {
+          setActiveId(data.id);
+          setAutoPrompt(undefined);
+          queryClient.invalidateQueries({ queryKey: getListConversationsQueryKey() });
+          setSidebarOpen(false);
+        }
+      }
+    );
+  };
+
+  const SidebarContent = () => (
+    <div className="flex flex-col h-full gap-3 p-4 md:p-0">
+      <div className="flex items-center justify-between">
+        <h1 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+          <BookOpen className="w-5 h-5 text-indigo-600" />
+          Education
+        </h1>
+        <div className="flex items-center gap-1">
+          <Button
+            onClick={handleNew}
+            disabled={createConversation.isPending}
+            size="sm"
+            variant="ghost"
+            className="h-8 w-8 p-0"
+            title="New session"
+          >
+            <Plus className="w-4 h-4" />
+          </Button>
+          <button className="md:hidden p-1.5 rounded-lg hover:bg-slate-100 text-slate-500" onClick={() => setSidebarOpen(false)}>
+            <X className="w-4 h-4" />
+          </button>
         </div>
       </div>
 
-      <div className="flex-1 bg-white rounded-2xl shadow-sm border border-slate-200 h-full overflow-hidden flex flex-col">
-        {activeId ? (
-          <EducationChat conversationId={activeId} />
+      <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-indigo-50 border border-indigo-100 rounded-lg">
+        <Sparkles className="w-3 h-3 text-indigo-600 flex-shrink-0" />
+        <span className="text-[11px] font-medium text-indigo-700">Agent 5 — Nutrition Intelligence</span>
+      </div>
+
+      <div className="relative">
+        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+        <Input
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="Search topics…"
+          className="pl-8 h-8 text-xs border-slate-200"
+        />
+      </div>
+
+      <div className="flex-1 overflow-y-auto space-y-1 min-h-0">
+        {isLoadingConvos ? (
+          Array(4).fill(0).map((_, i) => <Skeleton key={i} className="h-12 w-full rounded-lg" />)
+        ) : filteredConvos.length === 0 ? (
+          <div className="text-sm text-slate-500 text-center py-6 px-4 bg-slate-50 rounded-lg border border-slate-100">
+            {search ? "No matching topics" : "No topics explored yet. Start one below."}
+          </div>
         ) : (
-          <div className="h-full flex flex-col items-center justify-center p-8 bg-slate-50/50 overflow-y-auto">
-            <div className="w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center mb-6">
-              <Lightbulb className="w-10 h-10 text-indigo-600" />
-            </div>
-            <h3 className="text-2xl font-bold text-slate-900 mb-3 tracking-tight text-center">What would you like to learn?</h3>
-            <p className="text-slate-600 mb-10 max-w-lg text-center text-base leading-relaxed">
-              Dive deep into human biology, nutrition, fitness science, or general wellness practices with your AI guide.
+          filteredConvos.map(c => (
+            <button
+              key={c.id}
+              onClick={() => { setActiveId(c.id); setAutoPrompt(undefined); setSidebarOpen(false); }}
+              className={`w-full text-left px-3 py-2.5 text-sm rounded-lg truncate transition-all flex flex-col gap-0.5 border ${
+                activeId === c.id
+                  ? "bg-indigo-50 border-indigo-200 text-indigo-900"
+                  : "bg-transparent border-transparent text-slate-600 hover:bg-slate-100"
+              }`}
+            >
+              <span className="flex items-center gap-2">
+                <MessageSquare className={`w-3.5 h-3.5 shrink-0 ${activeId === c.id ? "text-indigo-500" : "text-slate-400"}`} />
+                <span className="truncate font-medium text-xs">{c.title}</span>
+              </span>
+              <span className="flex items-center gap-1 text-[10px] text-slate-400 pl-5">
+                <Clock className="w-2.5 h-2.5" />
+                {formatRelativeTime(String(c.updatedAt ?? c.createdAt))}
+              </span>
+            </button>
+          ))
+        )}
+      </div>
+
+      <div className="bg-slate-50 border border-slate-100 rounded-xl px-3 py-3">
+        <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide mb-2">Quick Topics</p>
+        <div className="grid grid-cols-2 gap-1.5">
+          {TOPICS.map(t => (
+            <button
+              key={t.id}
+              onClick={() => startTopic(t)}
+              disabled={createConversation.isPending}
+              className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-white border border-slate-100 hover:border-indigo-200 hover:bg-indigo-50 transition-all text-left group"
+            >
+              <span className="text-base">{t.icon}</span>
+              <span className="text-[10px] font-medium text-slate-700 group-hover:text-indigo-700 truncate">{t.title}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="max-w-6xl mx-auto h-[calc(100vh-8rem)] flex flex-col md:flex-row gap-0 md:gap-6 relative animate-in fade-in duration-500">
+      {/* Mobile backdrop */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/40 z-40 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Sidebar — desktop: static, mobile: drawer */}
+      <div className={`
+        flex-shrink-0 flex flex-col
+        md:w-72 md:static md:translate-x-0
+        fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-slate-100 shadow-xl
+        transition-transform duration-300 ease-in-out
+        md:bg-transparent md:border-none md:shadow-none
+        ${sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
+      `}>
+        <SidebarContent />
+      </div>
+
+      {/* Main area */}
+      <div className="flex-1 bg-white rounded-2xl shadow-sm border border-slate-200 h-full overflow-hidden flex flex-col">
+        {/* Mobile topbar */}
+        <div className="md:hidden flex items-center gap-3 px-4 py-3 border-b border-slate-100">
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="p-2 rounded-lg hover:bg-slate-100 text-slate-600 border border-slate-200"
+          >
+            <Menu className="w-4 h-4" />
+          </button>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-slate-800 truncate">
+              {activeId ? (eduConvos.find(c => c.id === activeId)?.title ?? "Education") : "Health Education"}
             </p>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl w-full">
-              {starterQuestions.map((q, i) => (
-                <button 
-                  key={i}
-                  onClick={() => {
-                    createConversation.mutate({ data: { mode: "education", title: q.title } }, {
-                      onSuccess: (data) => {
-                        setActiveId(data.id);
-                        queryClient.invalidateQueries({ queryKey: ["/api/chat/conversations"] });
-                      }
-                    });
-                  }}
-                  className="p-5 bg-white border border-slate-200 rounded-xl text-left hover:border-indigo-300 hover:shadow-md transition-all group flex flex-col h-full"
+          </div>
+          <Button
+            onClick={handleNew}
+            disabled={createConversation.isPending}
+            size="sm"
+            className="h-8 px-3 bg-indigo-600 hover:bg-indigo-700 text-white text-xs"
+          >
+            <Plus className="w-3.5 h-3.5 mr-1" /> New
+          </Button>
+        </div>
+
+        {activeId ? (
+          <EducationChat
+            key={activeId}
+            conversationId={activeId}
+            autoPrompt={autoPrompt}
+          />
+        ) : (
+          <div className="h-full flex flex-col items-center justify-center p-6 md:p-8 bg-slate-50/50 overflow-y-auto">
+            <div className="w-16 h-16 bg-indigo-50 rounded-full flex items-center justify-center mb-5">
+              <BookOpen className="w-8 h-8 text-indigo-600" />
+            </div>
+            <h3 className="text-xl md:text-2xl font-bold text-slate-900 mb-2 tracking-tight text-center">What would you like to learn?</h3>
+            <p className="text-slate-500 mb-8 max-w-lg text-center text-sm leading-relaxed">
+              Explore evidence-based health topics with your AI guide. Choose a topic below or ask any health question.
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-w-3xl w-full">
+              {TOPICS.map((topic) => (
+                <button
+                  key={topic.id}
+                  onClick={() => startTopic(topic)}
+                  disabled={createConversation.isPending}
+                  className={`p-4 bg-gradient-to-br ${topic.color} border rounded-xl text-left hover:shadow-md transition-all group flex flex-col gap-2`}
                 >
-                  <div className="flex justify-between items-start mb-2">
-                    <span className="text-lg">{q.icon}</span>
-                    <ArrowRight className="w-4 h-4 text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity transform group-hover:translate-x-1" />
+                  <div className="flex items-center justify-between">
+                    <span className="text-2xl">{topic.icon}</span>
+                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${topic.badge}`}>
+                      Explore
+                    </span>
                   </div>
-                  <h4 className="font-semibold text-slate-900 mb-1">{q.title}</h4>
-                  <p className="text-sm text-slate-500 mt-auto">{q.desc}</p>
+                  <div>
+                    <h4 className="font-semibold text-slate-900 text-sm mb-1">{topic.title}</h4>
+                    <p className="text-xs text-slate-500 leading-relaxed">{topic.desc}</p>
+                  </div>
                 </button>
               ))}
             </div>
-            
-            <Button onClick={handleNew} className="mt-10 bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm px-8" size="lg">
-              Start Custom Topic
+
+            <Button
+              onClick={handleNew}
+              className="mt-8 bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm px-6"
+              disabled={createConversation.isPending}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Ask Your Own Question
             </Button>
           </div>
         )}
@@ -129,8 +316,8 @@ export default function EducatePage() {
   );
 }
 
-function EducationChat({ conversationId }: { conversationId: number }) {
-  const { data: messages, isLoading } = useGetConversationMessages(conversationId, {
+function EducationChat({ conversationId, autoPrompt }: { conversationId: number; autoPrompt?: string }) {
+  const { data: msgs, isLoading } = useGetConversationMessages(conversationId, {
     query: { enabled: !!conversationId, queryKey: getGetConversationMessagesQueryKey(conversationId) }
   });
 
@@ -142,5 +329,12 @@ function EducationChat({ conversationId }: { conversationId: number }) {
     </div>
   );
 
-  return <ChatInterface conversationId={conversationId} initialMessages={messages || []} mode="education" />;
+  return (
+    <ChatInterface
+      conversationId={conversationId}
+      initialMessages={msgs ?? []}
+      mode="education"
+      autoPrompt={autoPrompt}
+    />
+  );
 }

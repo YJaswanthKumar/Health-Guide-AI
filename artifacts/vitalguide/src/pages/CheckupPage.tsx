@@ -2,7 +2,8 @@ import { useState, useRef, useEffect } from "react";
 import { useListConversations, useGetConversationMessages, useCreateConversation, getListConversationsQueryKey, getGetConversationMessagesQueryKey } from "@workspace/api-client-react";
 import CheckupChatInterface, { type CheckupChatHandle } from "@/components/checkup/CheckupChatInterface";
 import { Button } from "@/components/ui/button";
-import { Stethoscope, Plus, MessageSquare, Trash2, Upload, FileText, ShieldCheck, UserX, Sparkles } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Stethoscope, Plus, MessageSquare, Trash2, Upload, FileText, ShieldCheck, UserX, Sparkles, Search, Menu, X, Clock } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -77,6 +78,11 @@ function formatDocForChat(doc: DocUploadResult, isOwner: boolean): string {
     lines.push("This is my document. Please analyze these results and assess my health status, any concerns I should be aware of, and what follow-up actions I should take.");
   } else {
     lines.push("This document belongs to someone else (not me). Could you help me understand the medical information in it?");
+  }
+
+  if (doc.profileUpdated && doc.profileChanges?.length) {
+    lines.push("");
+    lines.push(`✅ Your health profile was updated: ${doc.profileChanges.join(", ")}`);
   }
 
   return lines.join("\n");
@@ -183,7 +189,7 @@ function DocumentUploadButton({
 
   return (
     <>
-      {ownershipDialog && (
+      {ownershipDialog?.open && (
         <OwnershipDialog
           open={ownershipDialog.open}
           filename={ownershipDialog.file.name}
@@ -208,13 +214,37 @@ function DocumentUploadButton({
   );
 }
 
+function formatRelativeTime(dateStr: string): string {
+  const now = Date.now();
+  const d = new Date(dateStr).getTime();
+  const diff = now - d;
+  const mins = Math.floor(diff / 60000);
+  const hours = Math.floor(diff / 3600000);
+  const days = Math.floor(diff / 86400000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  if (hours < 24) return `${hours}h ago`;
+  if (days < 7) return `${days}d ago`;
+  return new Date(dateStr).toLocaleDateString();
+}
+
 export default function CheckupPage() {
   const { data: conversations, isLoading: isLoadingConvos } = useListConversations({ query: { queryKey: getListConversationsQueryKey() } });
   const createConversation = useCreateConversation();
   const { toast } = useToast();
   const chatRef = useRef<CheckupChatHandle | null>(null);
 
-  const checkupConvos = conversations?.filter(c => c.mode === "checkup") || [];
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [search, setSearch] = useState("");
+
+  const checkupConvos = (conversations?.filter(c => c.mode === "checkup") ?? [])
+    .slice()
+    .sort((a, b) => new Date(b.updatedAt ?? b.createdAt).getTime() - new Date(a.updatedAt ?? a.createdAt).getTime());
+
+  const filteredConvos = search.trim()
+    ? checkupConvos.filter(c => c.title.toLowerCase().includes(search.toLowerCase()))
+    : checkupConvos;
+
   const [activeId, setActiveId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [pendingPrompt, setPendingPrompt] = useState<string | null>(null);
@@ -253,10 +283,17 @@ export default function CheckupPage() {
           queryClient.invalidateQueries({ queryKey: getListConversationsQueryKey() });
           setActiveId(newConvo.id);
           setPendingPrompt(null);
+          setSidebarOpen(false);
         },
         onError: () => toast({ title: "Failed to create conversation", variant: "destructive" }),
       }
     );
+  };
+
+  const handleSelectConvo = (id: number) => {
+    setActiveId(id);
+    setPendingPrompt(null);
+    setSidebarOpen(false);
   };
 
   const handleDelete = async (id: number) => {
@@ -272,85 +309,144 @@ export default function CheckupPage() {
     }
   };
 
-  return (
-    <div className="flex gap-4 md:gap-6 h-[calc(100vh-8rem)] md:h-[calc(100vh-8rem)]">
-      {/* Sidebar */}
-      <div className="w-48 md:w-64 flex-shrink-0 flex flex-col gap-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Stethoscope className="w-5 h-5 text-teal-600" />
-            <h2 className="font-semibold text-slate-800 text-sm md:text-base">Health Checkup</h2>
-          </div>
-          <Button size="sm" variant="ghost" onClick={handleNew} disabled={createConversation.isPending} className="h-8 w-8 p-0">
+  const SidebarContent = () => (
+    <div className="flex flex-col h-full gap-3 p-4 md:p-0">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Stethoscope className="w-5 h-5 text-teal-600" />
+          <h2 className="font-semibold text-slate-800">Health Checkup</h2>
+        </div>
+        <div className="flex items-center gap-1">
+          <Button size="sm" variant="ghost" onClick={handleNew} disabled={createConversation.isPending} className="h-8 w-8 p-0" title="New checkup">
             <Plus className="w-4 h-4" />
           </Button>
-        </div>
-
-        {/* Agent badge */}
-        <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-teal-50 border border-teal-100 rounded-lg">
-          <Sparkles className="w-3 h-3 text-teal-600 flex-shrink-0" />
-          <span className="text-[11px] font-medium text-teal-700">Powered by Agent 2 + 4 + 5</span>
-        </div>
-
-        <DocumentUploadButton conversationId={effectiveId} chatRef={chatRef} />
-
-        <div className="flex-1 overflow-y-auto space-y-1 min-h-0">
-          {isLoadingConvos ? (
-            <>
-              <Skeleton className="h-10 w-full rounded-lg" />
-              <Skeleton className="h-10 w-full rounded-lg" />
-            </>
-          ) : checkupConvos.length === 0 ? (
-            <div className="text-center py-8 text-slate-400 text-xs">
-              <MessageSquare className="w-6 h-6 mx-auto mb-2 opacity-40" />
-              No checkup sessions yet
-            </div>
-          ) : (
-            checkupConvos.map(c => (
-              <div
-                key={c.id}
-                className={`group flex items-center justify-between gap-1 px-3 py-2 rounded-lg cursor-pointer transition-colors ${
-                  (effectiveId === c.id) ? "bg-teal-50 text-teal-700" : "hover:bg-slate-100 text-slate-700"
-                }`}
-                onClick={() => { setActiveId(c.id); setPendingPrompt(null); }}
-              >
-                <span className="text-xs md:text-sm truncate flex-1">{c.title}</span>
-                <button
-                  type="button"
-                  className="opacity-0 group-hover:opacity-100 p-1 hover:text-red-500 transition-all"
-                  onClick={e => { e.stopPropagation(); handleDelete(c.id); }}
-                  disabled={deletingId === c.id}
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            ))
-          )}
-        </div>
-
-        {/* How it works */}
-        <div className="bg-slate-50 border border-slate-100 rounded-xl px-3 py-3">
-          <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide mb-1.5">How it works</p>
-          <ol className="space-y-1">
-            {[
-              "Describe your symptoms",
-              "Agent asks follow-up Qs",
-              "Full assessment generated",
-              "Emergency + nutrition AI triggered automatically",
-            ].map((s, i) => (
-              <li key={i} className="flex items-start gap-1.5 text-[11px] text-slate-500">
-                <span className="flex-shrink-0 w-4 h-4 bg-teal-100 text-teal-700 rounded-full flex items-center justify-center text-[9px] font-bold mt-0.5">{i + 1}</span>
-                {s}
-              </li>
-            ))}
-          </ol>
+          <button className="md:hidden p-1.5 rounded-lg hover:bg-slate-100 text-slate-500" onClick={() => setSidebarOpen(false)}>
+            <X className="w-4 h-4" />
+          </button>
         </div>
       </div>
 
+      <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-teal-50 border border-teal-100 rounded-lg">
+        <Sparkles className="w-3 h-3 text-teal-600 flex-shrink-0" />
+        <span className="text-[11px] font-medium text-teal-700">Powered by Agent 2 + 4 + 5</span>
+      </div>
+
+      <DocumentUploadButton conversationId={effectiveId} chatRef={chatRef} />
+
+      <div className="relative">
+        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+        <Input
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="Search sessions…"
+          className="pl-8 h-8 text-xs border-slate-200"
+        />
+      </div>
+
+      <div className="flex-1 overflow-y-auto space-y-1 min-h-0">
+        {isLoadingConvos ? (
+          <>
+            <Skeleton className="h-12 w-full rounded-lg" />
+            <Skeleton className="h-12 w-full rounded-lg" />
+            <Skeleton className="h-12 w-full rounded-lg" />
+          </>
+        ) : filteredConvos.length === 0 ? (
+          <div className="text-center py-8 text-slate-400 text-xs">
+            <MessageSquare className="w-6 h-6 mx-auto mb-2 opacity-40" />
+            {search ? "No matching sessions" : "No checkup sessions yet"}
+          </div>
+        ) : (
+          filteredConvos.map(c => (
+            <div
+              key={c.id}
+              className={`group flex items-start justify-between gap-1 px-3 py-2.5 rounded-lg cursor-pointer transition-colors ${
+                (effectiveId === c.id) ? "bg-teal-50 border border-teal-100 text-teal-700" : "hover:bg-slate-100 text-slate-700 border border-transparent"
+              }`}
+              onClick={() => handleSelectConvo(c.id)}
+            >
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-medium truncate">{c.title}</p>
+                <p className="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5">
+                  <Clock className="w-2.5 h-2.5" />
+                  {formatRelativeTime(String(c.updatedAt ?? c.createdAt))}
+                </p>
+              </div>
+              <button
+                type="button"
+                className="opacity-0 group-hover:opacity-100 p-1 hover:text-red-500 transition-all flex-shrink-0 mt-0.5"
+                onClick={e => { e.stopPropagation(); handleDelete(c.id); }}
+                disabled={deletingId === c.id}
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ))
+        )}
+      </div>
+
+      <div className="bg-slate-50 border border-slate-100 rounded-xl px-3 py-3">
+        <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide mb-1.5">How it works</p>
+        <ol className="space-y-1">
+          {[
+            "Describe your symptoms",
+            "Agent asks follow-up Qs",
+            "Full assessment generated",
+            "Emergency + nutrition AI triggered",
+          ].map((s, i) => (
+            <li key={i} className="flex items-start gap-1.5 text-[11px] text-slate-500">
+              <span className="flex-shrink-0 w-4 h-4 bg-teal-100 text-teal-700 rounded-full flex items-center justify-center text-[9px] font-bold mt-0.5">{i + 1}</span>
+              {s}
+            </li>
+          ))}
+        </ol>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="flex gap-0 md:gap-6 h-[calc(100vh-8rem)] relative">
+      {/* Mobile backdrop */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/40 z-40 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Sidebar — desktop: static, mobile: drawer */}
+      <div className={`
+        flex-shrink-0 flex flex-col
+        md:w-64 md:static md:translate-x-0
+        fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-slate-100 shadow-xl
+        transition-transform duration-300 ease-in-out
+        md:bg-transparent md:border-none md:shadow-none
+        ${sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
+      `}>
+        <SidebarContent />
+      </div>
+
       {/* Chat Area */}
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 flex flex-col">
+        {/* Mobile header bar */}
+        <div className="md:hidden flex items-center gap-3 mb-3 px-1">
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="p-2 rounded-lg hover:bg-slate-100 text-slate-600 border border-slate-200"
+          >
+            <Menu className="w-4 h-4" />
+          </button>
+          <div className="flex-1 min-w-0">
+            <h2 className="font-semibold text-slate-800 text-sm truncate">
+              {activeConvo?.title ?? "Health Checkup"}
+            </h2>
+          </div>
+          <Button size="sm" onClick={handleNew} disabled={createConversation.isPending} className="h-8 px-3 bg-teal-600 hover:bg-teal-700 text-white text-xs">
+            <Plus className="w-3.5 h-3.5 mr-1" /> New
+          </Button>
+        </div>
+
         {!effectiveId ? (
-          <div className="h-full flex flex-col items-center justify-center text-center gap-4">
+          <div className="h-full flex flex-col items-center justify-center text-center gap-4 px-4">
             <div className="w-16 h-16 rounded-full bg-teal-50 flex items-center justify-center">
               <Stethoscope className="w-8 h-8 text-teal-400" />
             </div>
@@ -362,7 +458,7 @@ export default function CheckupPage() {
             </div>
             <div className="flex items-center gap-1.5 bg-teal-50 border border-teal-100 rounded-full px-4 py-2">
               <Sparkles className="w-3.5 h-3.5 text-teal-600" />
-              <span className="text-xs font-medium text-teal-700">Agents 2, 4 & 5 — Health Assessment, Emergency & Nutrition</span>
+              <span className="text-xs font-medium text-teal-700">Agents 2, 4 & 5 — Assessment, Emergency & Nutrition</span>
             </div>
             <Button onClick={handleNew} disabled={createConversation.isPending} className="bg-teal-600 hover:bg-teal-700 text-white gap-2">
               <Plus className="w-4 h-4" />

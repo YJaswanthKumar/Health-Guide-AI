@@ -1,0 +1,380 @@
+The MongoDB migration plan is postponed.
+
+For this submission, continue using the existing PostgreSQL + Drizzle ORM architecture. Do NOT migrate to MongoDB. Ignore the previous MongoDB migration plan for now. We will revisit it after the submission.
+
+IMPORTANT
+
+This is NOT a new project.
+
+Do NOT redesign the application.
+
+Do NOT recreate completed functionality.
+
+Read README.md and PROGRESS.md completely before making any changes.
+
+Understand the current implementation first, then continue development.
+
+=========================================================
+CURRENT PROJECT STATUS
+=========================================================
+
+The project is built using:
+
+- React + Vite
+- Express
+- PostgreSQL
+- Drizzle ORM
+- Clerk Authentication
+
+The 5 CrewAI Agents are deployed and available again.
+
+The application should now be completed around these deployed agents.
+
+Continue using PostgreSQL.
+
+Do NOT introduce MongoDB.
+
+=========================================================
+PRIORITY 1 — STABILITY
+=========================================================
+
+Before implementing anything new:
+
+- Verify backend APIs.
+- Verify database persistence.
+- Verify authentication.
+- Verify profile loading.
+- Verify dashboard loading.
+- Verify session persistence.
+
+The Dashboard should NEVER become blank.
+
+Fix every scenario that causes:
+
+- blank pages
+- loading forever
+- failed redirects
+- inconsistent profile loading
+
+Every page should have:
+
+- loading skeleton
+- proper error state
+- retry button
+- graceful fallback
+
+=========================================================
+PRIORITY 2 — USER DATA PERSISTENCE
+=========================================================
+
+The application should behave like a production healthcare application.
+
+When a user signs up:
+
+- create account
+- complete profile
+- upload documents
+- store profile
+- store documents
+
+When the user logs out:
+
+NO DATA should be deleted.
+
+When the user logs in again:
+
+Everything should be restored from PostgreSQL.
+
+Including:
+
+- profile
+- medications
+- allergies
+- medical conditions
+- emergency contacts
+- uploaded reports
+- plans
+- tasks
+- conversations
+- dashboard
+- education history
+- companion history
+- notifications
+
+Never depend on temporary frontend state.
+
+=========================================================
+PRIORITY 3 — HEALTH CHECKUP
+=========================================================
+
+Redesign Health Checkup into a ChatGPT-style conversation experience.
+
+Requirements:
+
+Every new checkup starts a new conversation.
+
+Left sidebar:
+
+- previous conversations
+- searchable
+- sorted by latest
+- conversation title
+- last updated
+- preview
+
+Desktop:
+
+Sidebar + Chat
+
+Mobile:
+
+Drawer + Chat
+
+Uploading a medical document during signup should:
+
+- upload document
+- create Health Checkup conversation
+- automatically redirect
+- open that conversation
+
+Uploading a document from Profile should perform the same workflow.
+
+=========================================================
+PRIORITY 4 — EDUCATION PAGE
+=========================================================
+
+Use the same conversation architecture.
+
+Education conversations must be stored separately from Health Checkup conversations.
+
+The left sidebar should contain previous education chats.
+
+Selecting any education topic should automatically create a new conversation.
+
+Topics:
+
+- Nutrition
+- Exercise
+- Mental Health
+- Healthy Lifestyle
+- Medical Reports
+- Medication Safety
+
+Since Agent 5 is available again, reconnect the Education page to Agent 5 instead of placeholder responses.
+
+Conversation history must persist after refresh and after login.
+
+=========================================================
+PRIORITY 5 — PLAN TRACKER
+=========================================================
+
+The current Plan Tracker still feels static.
+
+Transform it into a complete Action Plan Management System.
+
+Each plan must include:
+
+- title
+- description
+- category
+- start date
+- end date
+- duration
+- current day
+- completed days
+- remaining days
+- progress percentage
+- status
+
+Allow:
+
+- Create
+- Edit
+- Delete
+- Archive
+- Resume
+
+Tasks must belong to plans.
+
+Dashboard should display:
+
+- Active Plans
+- Completed Plans
+- Today's Tasks
+- Plan Progress
+- Health Score (if available)
+- Compliance Score (if available)
+
+Calendar should open as a centered modal instead of expanding the page.
+
+Use a Samsung Health / Samsung Calendar inspired experience.
+
+=========================================================
+PRIORITY 6 — CARE COMPANION
+=========================================================
+
+The Care Companion should not behave like a generic chatbot.
+
+It should feel like a personal healthcare assistant.
+
+Reduce typing.
+
+Prefer interactive UI.
+
+Examples:
+
+Medication confirmation buttons.
+
+Water intake buttons.
+
+Mood cards.
+
+Meal timing buttons.
+
+Sleep tracking buttons.
+
+Quick replies.
+
+Suggested responses.
+
+Daily health check-ins.
+
+The companion should proactively interact with the user based on:
+
+- plans
+- tasks
+- medications
+- health progress
+- Agent outputs
+
+=========================================================
+PRIORITY 7 — AI AGENT INTEGRATION
+=========================================================
+
+The deployed CrewAI agents are available again.
+
+Reconnect them properly.
+
+Agent 1
+
+Medical Report Intelligence
+
+Responsible for:
+
+- report extraction
+- report understanding
+- profile updates
+
+Agent 2
+
+Health Assessment
+
+Responsible for:
+
+- symptom interview
+- health assessment
+- recommendations
+
+Agent 3
+
+Care Planner
+
+Responsible for:
+
+- plans
+- tasks
+- reminders
+- dashboard updates
+
+Agent 4
+
+Emergency Navigator
+
+Responsible for:
+
+- emergency detection
+- hospitals
+- emergency contacts
+- first aid
+- escalation
+
+Agent 5
+
+Nutrition Intelligence
+
+Responsible for:
+
+- education
+- nutrition
+- meal guidance
+- food recommendations
+
+Verify every deployed endpoint.
+
+Verify request format.
+
+Verify response parsing.
+
+Handle API failures gracefully.
+
+Never let the frontend crash because an AI service is unavailable.
+
+=========================================================
+PRIORITY 8 — MOBILE EXPERIENCE
+=========================================================
+
+Review every page.
+
+Improve:
+
+- responsiveness
+- spacing
+- typography
+- cards
+- chat layout
+- sidebars
+- drawers
+- scrolling
+- overflow
+- touch interaction
+
+The application should feel like a modern healthcare mobile application.
+
+=========================================================
+DOCUMENTATION
+=========================================================
+
+Whenever a major milestone is completed:
+
+Update README.md.
+
+Update PROGRESS.md.
+
+Include:
+
+- completed work
+- modified files
+- API changes
+- database changes
+- UI changes
+- known issues
+- remaining work
+
+=========================================================
+HANDOVER
+=========================================================
+
+Because development continues across multiple Replit accounts with limited AI credits, after every major milestone provide a detailed handover containing:
+
+- what was completed
+- modified files
+- new APIs
+- database changes
+- UI changes
+- remaining bugs
+- remaining features
+- exact next task
+
+If credits are exhausted, another Replit AI should be able to continue using only the README.md, PROGRESS.md, and the final handover summary without losing context.
+
+Do not stop after fixing one issue. Continue implementing the priorities in order until completion or until AI credits are exhausted.
