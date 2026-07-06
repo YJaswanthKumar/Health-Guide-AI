@@ -1,0 +1,203 @@
+Excellent. The analysis matches my understanding of the project.
+
+Do NOT spend time moving agent tokens or performing a full audit right now. Those are lower priority for the submission and can be addressed later.
+
+Instead, begin implementing the remaining features in priority order.
+
+The goal is to make the application feel like a complete, production-ready AI healthcare platform.
+
+=========================================================
+PRIORITY 0 — FIX PREVIEW & APPLICATION STABILITY
+=========================================================
+
+Before implementing any new features, fix the Preview environment.
+
+The application preview is currently blank or not rendering correctly.
+
+Find the root cause and fix it completely.
+
+Investigate:
+
+- Frontend startup
+- Backend startup
+- Development workflows
+- Routing
+- API connectivity
+- Environment variables
+- Build errors
+- Runtime errors
+- React rendering issues
+- Console errors
+- Network failures
+
+The Preview should always load successfully.
+
+Requirements:
+
+- Preview must never remain blank.
+- Frontend should always render.
+- Backend should connect correctly.
+- Proper loading state should be shown while initializing.
+- If any service fails, show an informative error instead of a blank page.
+- Verify Preview works on every major page before continuing development.
+
+Do not continue with feature implementation until Preview is fully working.
+
+=========================================================
+PRIORITY 1 — HEALTH CHECKUP EXPERIENCE
+=========================================================
+
+This is the highest priority after Preview is fixed.
+
+Transform the Health Checkup module into a ChatGPT-style experience.
+
+Requirements:
+
+- Left sidebar showing previous Health Checkup conversations.
+- Search conversations.
+- New Conversation button.
+- Rename conversation.
+- Delete conversation.
+- Conversations sorted by updatedAt descending.
+- Restore conversations after refresh.
+- Restore conversations after logout/login.
+- Mobile drawer for the conversation sidebar.
+
+Medical document upload must behave consistently.
+
+When uploading:
+
+- during signup
+- from Profile
+
+Automatically:
+
+- upload the document
+- create a new Health Checkup conversation
+- redirect to Health Checkup
+- open the newly created conversation
+- send the uploaded document to Agent 1
+- continue the conversation naturally using Agent 2
+
+The user should never manually search for the uploaded report.
+
+If an AI request is slow:
+
+- show proper loading
+- show progress
+- never freeze the UI
+- never show a blank page
+
+=========================================================
+PRIORITY 2 — PLAN TRACKER
+=========================================================
+
+After Health Checkup is complete, continue improving the Plan Tracker.
+
+I want it to feel closer to Samsung Health than a CRUD application.
+
+Improve:
+
+- Action Plan cards
+- Progress visualization
+- Timeline
+- Calendar
+- Daily tracking
+- Statistics
+- Better mobile experience
+
+Dashboard cards should automatically reflect:
+
+- Active Plans
+- Completed Plans
+- Today's Tasks
+- Plan Progress
+
+=========================================================
+PRIORITY 3 — DASHBOARD
+=========================================================
+
+Improve the Dashboard.
+
+It should become the central health overview.
+
+Include:
+
+- Today's Tasks
+- Active Plans
+- Companion Widget
+- Daily Progress
+- Health Summary
+- Recent Checkups
+- Recent Education Conversations
+- Notifications
+
+=========================================================
+PRIORITY 4 — CARE COMPANION
+=========================================================
+
+The Care Companion should feel like a real healthcare assistant instead of a generic chatbot.
+
+Reduce typing wherever possible.
+
+Use:
+
+- Quick reply buttons
+- Cards
+- Chips
+- Interactive selections
+- Suggested replies
+
+Examples include:
+
+- Medication confirmation
+- Water intake
+- Mood tracking
+- Meal timing
+- Sleep quality
+- Exercise
+- Recovery follow-ups
+
+The conversation should become contextual and proactive.
+
+=========================================================
+PRIORITY 5 — MOBILE EXPERIENCE
+=========================================================
+
+Once the above modules are complete, review the application on mobile.
+
+Improve:
+
+- responsiveness
+- spacing
+- chat layout
+- sidebars
+- drawers
+- overflow
+- typography
+- scrolling
+
+The application should feel polished on both desktop and mobile.
+
+=========================================================
+IMPORTANT
+=========================================================
+
+Complete one module before moving to the next.
+
+Do not partially implement multiple modules.
+
+After completing each major module:
+
+- update README.md
+- update PROGRESS.md
+- provide a detailed handover including:
+  - completed work
+  - modified files
+  - API changes
+  - database changes
+  - UI changes
+  - remaining work
+  - exact next recommended task
+
+If AI credits are exhausted, the handover should allow another Replit workspace to continue development immediately.
