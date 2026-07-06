@@ -1,27 +1,33 @@
 import { logger } from "./logger";
 
+function requireEnv(key: string): string {
+  const val = process.env[key];
+  if (!val) throw new Error(`Missing required environment variable: ${key}`);
+  return val;
+}
+
 const AGENTS = {
   agent1: {
-    url: "https://agent-1-health-assessment-check-up-intellig-1dc82804.crewai.com",
-    token: "e4e8b0ade661",
+    get url() { return requireEnv("AGENT1_URL"); },
+    get token() { return requireEnv("AGENT1_TOKEN"); },
   },
   agent2: {
-    url: "https://agent-2-health-assessment-v1-f8f3c084-83c5--699b282f.crewai.com",
-    token: "9291998bc791",
+    get url() { return requireEnv("AGENT2_URL"); },
+    get token() { return requireEnv("AGENT2_TOKEN"); },
   },
   agent3: {
-    url: "https://agent-3-intelligent-care-planner-21e241b6-5-4dc6483c.crewai.com",
-    token: "d8fa917bc5bb",
+    get url() { return requireEnv("AGENT3_URL"); },
+    get token() { return requireEnv("AGENT3_TOKEN"); },
   },
   agent4: {
-    url: "https://agent-4-emergency-navigator-agent-v1-395711-fc767e98.crewai.com",
-    token: "428828ceb133",
+    get url() { return requireEnv("AGENT4_URL"); },
+    get token() { return requireEnv("AGENT4_TOKEN"); },
   },
   agent5: {
-    url: "https://agent-5-nutriwise-nutrition-intelligence-ra-57fa0f34.crewai.com",
-    token: "7f4bfc5ea7e6",
+    get url() { return requireEnv("AGENT5_URL"); },
+    get token() { return requireEnv("AGENT5_TOKEN"); },
   },
-} as const;
+};
 
 type AgentKey = keyof typeof AGENTS;
 
