@@ -83,6 +83,30 @@ All agent config lives in: `artifacts/api-server/src/lib/agentRouter.ts`
 - [x] `artifacts/vitalguide/src/components/checkup/CheckupChatInterface.tsx` — agent-powered chat
 - [x] `artifacts/vitalguide/src/pages/CheckupPage.tsx` — updated to use CheckupChatInterface
 
+### Phase 3 — Education Page Agent 5 Integration ✅
+
+#### Backend
+- [x] `artifacts/api-server/src/routes/education.ts` — new education agent route
+  - `POST /api/education-agent/conversations/:id/message`
+  - Calls Agent 5 (NutriWise Nutrition Intelligence) with user profile + conversation history + topic
+  - Extracts response from multiple possible Agent 5 output shapes (`response`, `message`, `answer`, `content`, structured fields)
+  - Falls back to Gemini 2.5 Flash if Agent 5 times out or fails
+  - Mode guard: rejects non-`education` conversations with 400
+  - IDOR guard: ownership verified before read/write
+- [x] `artifacts/api-server/src/routes/index.ts` — mounts `/education-agent`
+
+#### Frontend
+- [x] `artifacts/vitalguide/src/pages/EducatePage.tsx` — replaced SSE `ChatInterface` with `EducationChatPanel`
+  - Non-streaming JSON pattern (matches Agent 5's kickoff+poll response time of 30-90s)
+  - Animated **"Agent 5 is researching your question…"** indicator during wait
+  - Optimistic user message shown immediately, replaced with DB messages on success
+  - Dismissible error banner on failure
+  - `autoPrompt` fires once per conversation — clicking a topic card creates conversation + auto-sends starter message to Agent 5
+  - Correct TypeScript types throughout: `EduConvo = Conversation & { updatedAt?: string | null }` extension type
+
+#### No database changes
+Education conversations reuse the existing `conversations` + `messages` tables (same schema as checkup/planner). No migrations needed.
+
 ---
 
 ## 🔄 Data Flow — Health Checkup

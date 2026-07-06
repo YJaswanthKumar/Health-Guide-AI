@@ -2,20 +2,22 @@
 
 > Your trusted AI-powered health companion — understand symptoms, track care plans, and learn about nutrition and wellness.
 
-VitalGuide is a full-stack, personalized health management app powered by Google Gemini 2.5 Flash. Users complete a health profile on onboarding, which is injected into every AI conversation for truly personalized responses.
+VitalGuide is a full-stack, personalized health management app powered by a **five-agent CrewAI platform** and Google Gemini 2.5 Flash. Users complete a health profile on onboarding, which is injected into every AI conversation for truly personalized responses.
 
 ---
 
 ## ✨ Features
 
-| Feature | Description |
-|---|---|
-| **Health Checkup** | Conversational symptom assessment. Asks follow-up questions, gives safe preliminary guidance, detects emergencies and shows alert banners. |
-| **Plan Tracker** | Manage medication, diet, and fitness plans. AI coach helps you stay on track with encouraging, shame-free guidance. |
-| **Health Education** | Evidence-based myth-busting and nutrition Q&A. Personalized to your profile. |
-| **Daily Logs** | Track mood, sleep, water intake, food, symptoms, and medications each day. |
-| **Onboarding Profile** | 3-step profile setup (personal info → health conditions → goals) feeds every AI prompt. |
-| **Medical Documents** | Upload and store medical records; summaries are injected into Checkup AI context. |
+| Feature | Agent | Description |
+|---|---|---|
+| **Health Checkup** | Agent 2 + 4 + 5 + 3 | Conversational symptom assessment → parallel orchestration: emergency nav (Agent 4), nutrition advice (Agent 5), care plan (Agent 3). Assessment stored per conversation. |
+| **Plan Tracker** | Agent 3 | Manage medication, diet, and fitness plans. Agent 3 creates and refreshes task plans. |
+| **Health Education** | Agent 5 + Gemini fallback | Evidence-based health topics powered by Agent 5 (NutriWise). Conversation history persists. Falls back to Gemini 2.5 Flash if Agent 5 is unavailable. |
+| **Care Companion** | Agent 3 | Proactive health assistant widget on Dashboard. Full conversation at `/companion`. |
+| **Task Manager** | Agent 3 | Today's tasks on Dashboard and Plan Tracker sidebar. Agent-generated or user-created. |
+| **Daily Logs** | — | Track mood, sleep, water intake, food, symptoms, and medications each day. |
+| **Onboarding Profile** | — | 3-step profile setup (personal info → health conditions → goals) feeds every AI prompt. |
+| **Medical Documents** | — | Upload and store medical records; summaries are injected into Checkup AI context. |
 
 ---
 
@@ -40,7 +42,11 @@ vitalguide/                         ← Monorepo root
 │   │   │       ├── plans.ts        ← CRUD /api/plans
 │   │   │       ├── logs.ts         ← GET/POST /api/logs, GET /api/logs/today
 │   │   │       ├── chat.ts         ← SSE streaming AI chat /api/chat/*
-│   │   │       └── documents.ts    ← Medical documents /api/documents
+│   │   │       ├── documents.ts    ← Medical documents /api/documents
+│   │   │       ├── checkup.ts      ← Agent 2+4+5+3 checkup orchestration /api/checkup-agent/*
+│   │   │       ├── education.ts    ← Agent 5 education chat /api/education-agent/*
+│   │   │       ├── tasks.ts        ← Task CRUD + Agent 3 refresh /api/tasks/*
+│   │   │       └── companion.ts    ← Care Companion chat /api/companion/*
 │   │   ├── build.mjs               ← esbuild bundler script
 │   │   └── package.json
 │   │
@@ -136,41 +142,65 @@ Base URL: `/api`
 | `GET` | `/chat/conversations` | List user's AI conversations |
 | `POST` | `/chat/conversations` | Start a new conversation |
 | `GET` | `/chat/conversations/:id/messages` | Message history (ownership verified) |
-| `POST` | `/chat/conversations/:id/messages` | Send message → SSE streaming response |
+| `POST` | `/chat/conversations/:id/messages` | Send message → SSE streaming response (planner/checkup legacy) |
 | `DELETE` | `/chat/conversations/:id` | Delete conversation + messages (cascade) |
 | `GET` | `/documents` | List medical documents |
 | `POST` | `/documents` | Upload a medical document |
+| `POST` | `/checkup-agent/conversations/:id/message` | Health checkup — Agent 2 assessment + parallel Agent 4/5/3 orchestration |
+| `GET` | `/checkup-agent/conversations/:id/assessment` | Fetch stored assessment JSON for a conversation |
+| `POST` | `/education-agent/conversations/:id/message` | Education chat — Agent 5 (NutriWise) with Gemini fallback |
+| `GET` | `/tasks` | List user tasks |
+| `POST` | `/tasks` | Create task manually |
+| `PATCH` | `/tasks/:id/complete` | Mark task complete |
+| `DELETE` | `/tasks/:id` | Delete task |
+| `POST` | `/tasks/agent-refresh` | Invoke Agent 3 to refresh task plan |
+| `GET` | `/companion/messages` | Full companion conversation history |
+| `GET` | `/companion/latest` | Latest companion message (for widget) |
+| `POST` | `/companion/message` | Send to Agent 3, get reply + optional tasks |
+| `POST` | `/companion/proactive` | Generate proactive check-in (4hr cache) |
 
 ---
 
-## ⚡ AI Chat Architecture
+## ⚡ AI Architecture
 
+VitalGuide uses **two distinct AI patterns** depending on the feature:
+
+### 1. SSE Streaming (Planner chat)
 ```
 Frontend (ChatInterface.tsx)
   │
   ├─ POST /api/chat/conversations/:id/messages
   │
 Backend (chat.ts)
-  ├─ Verify conversation ownership
-  ├─ Load user health profile from DB
-  ├─ Load recent medical documents (checkup mode only)
-  ├─ Build system prompt:
-  │     [mode prompt] + [health profile] + [document summaries]
-  ├─ Call Google Gemini 2.5 Flash (generateContentStream)
-  │
-  └─ Stream SSE chunks:
-        data: {"content": "..."}   ← per token
-        data: [DONE]               ← end of stream
-        data: {"error": "..."}     ← on failure
+  ├─ Verify ownership → load profile + docs → build system prompt
+  ├─ Call Gemini 2.5 Flash (generateContentStream)
+  └─ Stream SSE chunks → data: {"content":"..."} … data: [DONE]
 
-Frontend reads stream with fetch + ReadableStream → updates chat bubble in real-time
-Full response is saved to messages table after stream completes
+Frontend reads stream with fetch + ReadableStream → real-time chat bubble
 ```
 
-**AI modes and their system prompt focus:**
-- `checkup` — Symptom assessment. Detects `EMERGENCY` keyword → shows alert banner.
-- `planner` — Health coaching. References logged food/sleep/mood data.
-- `education` — Myth-busting and nutrition Q&A.
+### 2. Agent Kickoff + Poll (Checkup & Education)
+```
+Frontend sends POST → backend kicks off CrewAI agent → polls until SUCCESS
+→ returns structured JSON (no streaming)
+
+Health Checkup (/api/checkup-agent):
+  Agent 2  →  follow-up question OR assessment complete
+                    ↓ (on complete, parallel)
+  Agent 4  →  emergency first aid (if severity=emergency)
+  Agent 5  →  nutrition advice (if food recs present)
+  Agent 3  →  care plan + tasks
+
+Education (/api/education-agent):
+  Agent 5 (NutriWise)  →  evidence-based health education
+       ↓ (on timeout/failure)
+  Gemini 2.5 Flash fallback
+```
+
+**AI modes:**
+- `planner` — SSE via Gemini 2.5 Flash. Health coaching, shame-free, references logs.
+- `checkup` — Agent 2 conversational assessment + parallel Agent 4/5/3 orchestration.
+- `education` — Agent 5 (NutriWise) with Gemini fallback. All 6 topics. History persists.
 
 ---
 
@@ -245,8 +275,11 @@ On Replit, all sensitive values (API keys, tokens, secrets) live in the **Secret
 ## 🏛️ Architecture Decisions
 
 - **Contract-first API**: `lib/api-spec/openapi.yaml` is the single source of truth. Run `codegen` after any route change to regenerate TanStack Query hooks and Zod schemas.
-- **SSE streaming**: AI responses stream token-by-token via Server-Sent Events — native `fetch` + `ReadableStream` on the frontend, `res.write()` on the backend. Not the generated mutation hook.
+- **SSE streaming for planner only**: Real-time token streaming via SSE is used exclusively for the planner chat (`/api/chat/…`). Checkup and education use the agent kickoff+poll pattern which returns a single JSON response — do not attempt to add SSE to these routes.
+- **Agent calls are backend-only**: CrewAI agents are never called from the frontend. All agent invocations go through `artifacts/api-server/src/lib/agentRouter.ts` → `invokeAgent(key, inputs, timeoutMs)`.
+- **Agent timeouts + graceful fallback**: Every `invokeAgent` call is wrapped in try/catch. Checkup falls back to a canned message; education falls back to Gemini 2.5 Flash. The frontend must never crash if an agent is unavailable.
 - **Clerk whitelabel proxy**: Required so Clerk auth tokens work across Replit's proxied iframe. Active in production only.
 - **Cascade deletes**: `messages.conversationId` has `onDelete: "cascade"` — deleting a conversation automatically removes all its messages.
 - **All React Query hooks require explicit `queryKey`**: Generated hooks enforce this via types. Example: `useGetProfile({ query: { queryKey: getGetProfileQueryKey() } })`.
 - **Tailwind CSS layer ordering**: `@layer theme, base, clerk, components, utilities` must appear before `@import "tailwindcss"` in `index.css` — Clerk themes need the layer declared first.
+- **Education mode guard**: `POST /api/education-agent/conversations/:id/message` rejects conversations where `mode !== "education"` with a 400. Always verify mode on agent-specific routes.
