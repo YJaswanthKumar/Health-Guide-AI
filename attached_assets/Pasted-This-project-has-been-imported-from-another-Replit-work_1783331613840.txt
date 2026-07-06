@@ -1,0 +1,164 @@
+This project has been imported from another Replit workspace because the previous workspace reached its AI usage limit.
+
+IMPORTANT
+
+This is NOT a new project.
+
+Do NOT redesign the architecture.
+Do NOT recreate completed functionality.
+Do NOT undo or replace any existing implementation unless it is clearly broken.
+
+Before making any changes:
+
+1. Read README.md completely.
+2. Read PROGRESS.md completely.
+3. Read the entire project structure.
+4. Understand the React frontend, Express backend, PostgreSQL database, Drizzle ORM, Clerk authentication, and CrewAI integrations.
+5. Compare the documentation with the current implementation.
+6. Identify exactly what has already been completed and what remains.
+
+After analyzing the project, provide a summary including:
+
+- Current project status
+- Completed features
+- Remaining features
+- Current database schema
+- Current API endpoints
+- Current AI agent integrations
+- Any broken functionality
+- Any unfinished modules
+- Any technical debt that should be addressed later
+
+Do NOT modify any code until the analysis is complete.
+
+=========================================================
+PROJECT ARCHITECTURE
+=========================================================
+
+Technology Stack
+
+- React + Vite
+- Express
+- PostgreSQL
+- Drizzle ORM
+- Clerk Authentication
+- CrewAI (5 deployed agents)
+
+Database:
+
+Continue using PostgreSQL.
+
+Do NOT migrate to MongoDB.
+
+MongoDB migration is postponed until after submission.
+
+=========================================================
+AI AGENTS
+=========================================================
+
+The deployed CrewAI agents are available again.
+
+Agent 1
+Medical Report Intelligence
+
+Agent 2
+Health Assessment
+
+Agent 3
+Care Planner
+
+Agent 4
+Emergency Navigator
+
+Agent 5
+Nutrition Intelligence
+
+Preserve all existing integrations.
+
+Do not redesign the Agent Router.
+
+=========================================================
+CURRENT DEVELOPMENT GOAL
+=========================================================
+
+The application should become submission-ready.
+
+Priorities are:
+
+1. Stability
+2. Data persistence
+3. Health Checkup
+4. Education
+5. Plan Tracker
+6. Dashboard
+7. Care Companion
+8. Mobile responsiveness
+9. UI polish
+
+The goal is not to add unnecessary features.
+
+The goal is to make every existing feature production-quality.
+
+=========================================================
+IMPORTANT DEVELOPMENT RULES
+=========================================================
+
+Every page should have:
+
+- Loading state
+- Skeleton loader
+- Empty state
+- Error state
+- Retry option
+
+No page should become blank.
+
+No request should hang forever.
+
+All user data must persist after:
+
+- Refresh
+- Logout
+- Login
+
+Never depend on temporary React state for important data.
+
+=========================================================
+DOCUMENTATION
+=========================================================
+
+Whenever a major milestone is completed:
+
+- Update README.md.
+- Update PROGRESS.md.
+
+Document:
+
+- Completed work
+- Modified files
+- Database changes
+- API changes
+- UI changes
+- Remaining work
+
+=========================================================
+HANDOVER
+=========================================================
+
+Because this project is being developed across multiple Replit accounts with limited AI credits, every session must end with a detailed handover.
+
+The handover should include:
+
+- What was completed
+- Modified files
+- API changes
+- Database changes
+- UI changes
+- Remaining bugs
+- Remaining features
+- Exact stopping point
+- Exact next recommended task
+
+This should allow another Replit workspace to continue development immediately if AI credits are exhausted.
+
+After completing the project analysis and presenting the summary, wait for my approval before making any code changes.
