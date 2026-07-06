@@ -10,6 +10,7 @@ A full-stack AI health companion that helps users understand symptoms, track per
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
 - Required env: `DATABASE_URL` (Replit-managed), `GEMINI_API_KEY`, `CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `SESSION_SECRET`
+- Agent tokens stored as Replit Secrets: `AGENT1_TOKEN`–`AGENT5_TOKEN`; URLs as shared env vars: `AGENT1_URL`–`AGENT5_URL`
 - `VITE_CLERK_PROXY_URL` must be `/api/__clerk` (set in shared env) so Clerk auth tokens work across Replit's proxy domain
 - Frontend runs on port 5000 (`Start application` workflow), API on port 8080 (`Backend API` workflow)
 
