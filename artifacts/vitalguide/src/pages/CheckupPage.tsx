@@ -209,7 +209,7 @@ function DocumentUploadButton({
 }
 
 export default function CheckupPage() {
-  const { data: conversations, isLoading: isLoadingConvos } = useListConversations();
+  const { data: conversations, isLoading: isLoadingConvos } = useListConversations({ query: { queryKey: getListConversationsQueryKey() } });
   const createConversation = useCreateConversation();
   const { toast } = useToast();
   const chatRef = useRef<CheckupChatHandle | null>(null);

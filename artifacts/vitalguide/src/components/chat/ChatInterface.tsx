@@ -224,12 +224,11 @@ const ChatInterface = forwardRef<ChatInterfaceHandle, ChatInterfaceProps>(functi
   };
 
   useEffect(() => {
-    if (autoPrompt && !autoPromptFiredRef.current && !isStreaming) {
-      autoPromptFiredRef.current = true;
-      const timer = setTimeout(() => sendText(autoPrompt), 300);
-      return () => clearTimeout(timer);
-    }
-  }, [autoPrompt]);
+    if (!(autoPrompt && !autoPromptFiredRef.current && !isStreaming)) return;
+    autoPromptFiredRef.current = true;
+    const timer = setTimeout(() => sendText(autoPrompt), 300);
+    return () => clearTimeout(timer);
+  }, [autoPrompt]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();

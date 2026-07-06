@@ -1,0 +1,397 @@
+This project has been imported from another Replit workspace. The previous development focused on CrewAI integration, but I am now rebuilding the application foundation before integrating the AI agents again.
+
+IMPORTANT
+
+This is NOT a new project.
+
+Do NOT redesign the architecture unnecessarily.
+
+Preserve the current React + Vite frontend, Express backend, PostgreSQL implementation until the migration is complete.
+
+My priority is to make the application stable, persistent, scalable, and AI-Agent Ready.
+
+=========================================================
+PHASE 1 - STABILIZATION
+=========================================================
+
+Before implementing any new features:
+
+- Read README.md completely.
+- Read PROGRESS.md completely.
+- Read the entire project.
+- Understand the folder structure.
+- Identify broken pages.
+- Identify unused code.
+- Identify incomplete implementations.
+- Identify temporary AI integrations.
+
+Fix only critical bugs first.
+
+The Dashboard currently becomes blank in some situations.
+
+Find the root cause.
+
+Fix it completely.
+
+Make sure:
+
+- refreshing never causes blank pages
+- loading states exist
+- proper error handling exists
+- fallback UI exists
+
+=========================================================
+PHASE 2 - DATABASE MIGRATION
+=========================================================
+
+The application currently stores some information temporarily or inconsistently.
+
+I want ALL user information stored permanently in MongoDB Atlas.
+
+DO NOT migrate to MongoDB immediately.
+
+FIRST, analyze the entire project and generate the COMPLETE MongoDB database schema that this application should use.
+
+The generated schema must be comprehensive and future-proof.
+
+Include every collection required by the application.
+
+Examples include (but are not limited to):
+
+- Users
+- Profiles
+- Medical Documents
+- Document Extraction Results
+- Health Checkup Conversations
+- Education Conversations
+- Conversation Messages
+- Action Plans
+- Tasks
+- Daily Logs
+- Medications
+- Allergies
+- Medical Conditions
+- Nutrition Plans
+- Emergency Contacts
+- Notifications
+- Appointments
+- User Preferences
+- Sessions
+- AI Memory
+- Companion Messages
+- Health Assessments
+- Agent Outputs
+- Dashboard Data
+- Calendar Events
+- Reminder History
+- Any additional collections required by the application.
+
+For EVERY collection provide:
+
+- Collection name
+- Purpose
+- Document structure
+- Field names
+- Data types
+- Relationships
+- Embedded vs referenced documents
+- Required fields
+- Optional fields
+- Recommended indexes
+- Validation rules
+
+DO NOT implement MongoDB until I explicitly approve the generated schema.
+
+Once the schema is generated, stop and wait for my review.
+
+=========================================================
+PHASE 3 - USER AUTHENTICATION & DATA PERSISTENCE
+=========================================================
+
+The application should behave like a production-grade healthcare platform.
+
+Requirements:
+
+A user signs up once.
+
+The profile is permanently stored.
+
+Logging out must NEVER delete any data.
+
+Logging in again should restore:
+
+- profile
+- medical history
+- plans
+- tasks
+- uploaded documents
+- conversations
+- dashboard
+- education chats
+- health checkup chats
+- preferences
+- notifications
+- companion history
+
+Everything must always come from the database.
+
+Never rely on temporary frontend state.
+
+=========================================================
+PHASE 4 - AI AGENT READY ARCHITECTURE
+=========================================================
+
+The application will later integrate five AI agents.
+
+Even though the agents are temporarily unavailable, prepare the frontend and backend so every module can later be controlled by an AI agent.
+
+The frontend should never communicate directly with an LLM.
+
+Instead every feature should expose reusable backend APIs that AI agents can later call.
+
+Examples:
+
+Task Manager
+
+Agent should be able to:
+
+- create task
+- update task
+- delete task
+- mark complete
+- create recurring task
+
+Plan Tracker
+
+Agent should be able to:
+
+- create plan
+- update plan
+- extend plan
+- archive plan
+- delete plan
+- update progress
+
+Dashboard
+
+Agent should be able to update:
+
+- reminders
+- recommendations
+- health score
+- compliance score
+- widgets
+- statistics
+- notifications
+
+Profile
+
+Agent should be able to:
+
+- read profile
+- update profile
+- add medications
+- update medications
+- add allergies
+- add conditions
+- add emergency contacts
+
+Medical Reports
+
+Agent should be able to:
+
+- create extraction
+- attach reports
+- summarize reports
+- update extracted data
+
+Conversation
+
+Agent should be able to:
+
+- create conversation
+- continue conversation
+- retrieve conversation history
+- save messages
+- generate summaries
+
+Everything should be modular and reusable.
+
+=========================================================
+PHASE 5 - HEALTH CHECKUP CHAT
+=========================================================
+
+Redesign the Health Checkup page.
+
+Instead of a single continuous chat,
+
+implement a ChatGPT-style conversation system.
+
+Requirements:
+
+Each new health assessment starts a NEW conversation.
+
+The left sidebar displays previous conversations.
+
+Each conversation contains:
+
+- title
+- created date
+- last updated
+- preview
+
+Clicking a conversation restores the entire conversation.
+
+Desktop:
+
+- Left sidebar
+- Conversation history
+- Main chat
+
+Mobile:
+
+- Drawer sidebar
+- Conversation history
+- Main chat
+
+Uploading a medical report during signup should automatically:
+
+- save the document
+- (future) extract data
+- create a new Health Checkup conversation
+- redirect to Health Checkup
+- open the new conversation
+
+Uploading a report from Profile should perform the same workflow.
+
+=========================================================
+PHASE 6 - EDUCATION CHAT
+=========================================================
+
+The Education page should use the same conversation architecture.
+
+The left sidebar stores previous education conversations.
+
+Selecting a topic creates a new conversation.
+
+Topics include:
+
+- Nutrition
+- Exercise
+- Mental Health
+- Healthy Lifestyle
+- Disease Education
+- Medical Reports
+- Medication Safety
+
+Until AI agents are integrated,
+
+return placeholder responses.
+
+Examples:
+
+"Thanks for your question. Our Health Education AI is currently being upgraded. Personalized responses will be available soon."
+
+or
+
+"Nutrition Agent is currently unavailable. Your question has been saved and will be answered once the AI service becomes available."
+
+The placeholder should still appear as a normal AI conversation.
+
+=========================================================
+PHASE 7 - UI REDESIGN
+=========================================================
+
+Improve the UI across the application.
+
+Focus on:
+
+- spacing
+- typography
+- responsiveness
+- loading states
+- animations
+- cards
+- consistency
+- accessibility
+
+Improve the mobile experience significantly.
+
+Use modern healthcare application design principles.
+
+=========================================================
+PROJECT DOCUMENTATION
+=========================================================
+
+Whenever a MAJOR feature or milestone is completed:
+
+Update README.md.
+
+Update PROGRESS.md.
+
+The documentation should always reflect the latest implementation.
+
+README.md should document:
+
+- Architecture
+- Features
+- Folder structure
+- APIs
+- Database
+- AI integration readiness
+- Setup instructions
+- Current project status
+
+PROGRESS.md should document:
+
+- Completed work
+- Current phase
+- Remaining tasks
+- Modified files
+- Database changes
+- API changes
+- UI changes
+- Known issues
+- Next recommended implementation steps
+
+=========================================================
+HANDOVER REQUIREMENTS
+=========================================================
+
+Because this project is being developed across multiple Replit accounts with limited AI credits, I need every session to end with a clear handover.
+
+Whenever a major implementation is completed, provide a detailed summary including:
+
+- What was completed
+- What files were modified
+- What database/schema changes were made
+- What API routes were added or modified
+- What frontend pages/components changed
+- Any new reusable services created
+- Any migrations performed
+- Any environment variables added or changed
+- Any remaining issues or known bugs
+- The exact point where development stopped
+- The exact next recommended task
+
+If AI credits are exhausted before completion, I should be able to copy your final summary into another Replit workspace and continue development without losing context.
+
+=========================================================
+GENERAL REQUIREMENTS
+=========================================================
+
+Do not redesign the application from scratch.
+
+Preserve reusable components.
+
+Keep the code modular.
+
+Keep APIs reusable.
+
+Prepare everything so rebuilding and integrating the five AI agents later requires minimal changes.
+
+DO NOT migrate to MongoDB immediately.
+
+FIRST generate the complete MongoDB schema for review.
+
+WAIT for my approval before implementing the database migration.

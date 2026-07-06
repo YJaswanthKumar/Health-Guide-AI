@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { useAuth } from "@clerk/react";
-import { useListPlans, useCreatePlan, useUpdatePlan, useDeletePlan, useGetTodayLog, useListConversations, useCreateConversation, useGetConversationMessages, getGetTodayLogQueryKey, getGetConversationMessagesQueryKey, getListPlansQueryKey } from "@workspace/api-client-react";
+import { useListPlans, useCreatePlan, useUpdatePlan, useDeletePlan, useGetTodayLog, useListConversations, useCreateConversation, useGetConversationMessages, getGetTodayLogQueryKey, getGetConversationMessagesQueryKey, getListPlansQueryKey, getListConversationsQueryKey } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,7 +40,7 @@ type PlanFormValues = z.infer<typeof planSchema>;
 export default function PlannerPage() {
   const { data: plans } = useListPlans();
   const { data: todayLog, refetch: refetchTodayLog } = useGetTodayLog({ query: { retry: false, queryKey: getGetTodayLogQueryKey() } });
-  const { data: convos } = useListConversations();
+  const { data: convos } = useListConversations({ query: { queryKey: getListConversationsQueryKey() } });
   const createPlan = useCreatePlan();
   const updatePlan = useUpdatePlan();
   const deletePlan = useDeletePlan();
@@ -148,9 +148,11 @@ export default function PlannerPage() {
     });
   };
 
-  if (!activeConvoId && plannerConvos.length > 0) {
-    setActiveConvoId(plannerConvos[plannerConvos.length - 1].id);
-  }
+  useEffect(() => {
+    if (!activeConvoId && plannerConvos.length > 0) {
+      setActiveConvoId(plannerConvos[plannerConvos.length - 1].id);
+    }
+  }, [activeConvoId, plannerConvos]);
 
   const openLogForDate = useCallback(async (date: string) => {
     setLogDate(date);

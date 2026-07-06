@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "1gMf__VRPfb6ZuD44KKTS"
+uri = "file://MONGODB_SCHEMA_PHASE2.md"
+type = "text"
+title = "Phase 2 — MongoDB Schema (Pending Approval)"

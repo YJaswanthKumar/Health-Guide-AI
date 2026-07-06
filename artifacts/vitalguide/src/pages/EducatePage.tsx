@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useListConversations, useGetConversationMessages, useCreateConversation, getGetConversationMessagesQueryKey } from "@workspace/api-client-react";
+import { useState, useEffect } from "react";
+import { useListConversations, useGetConversationMessages, useCreateConversation, getGetConversationMessagesQueryKey, getListConversationsQueryKey } from "@workspace/api-client-react";
 import ChatInterface from "@/components/chat/ChatInterface";
 import { Button } from "@/components/ui/button";
 import { BookOpen, Plus, MessageSquare, ArrowRight, Lightbulb } from "lucide-react";
@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { queryClient } from "@/lib/queryClient";
 
 export default function EducatePage() {
-  const { data: conversations, isLoading: isLoadingConvos } = useListConversations();
+  const { data: conversations, isLoading: isLoadingConvos } = useListConversations({ query: { queryKey: getListConversationsQueryKey() } });
   const createConversation = useCreateConversation();
   
   const eduConvos = conversations?.filter(c => c.mode === "education") || [];
@@ -22,9 +22,11 @@ export default function EducatePage() {
     });
   };
 
-  if (!activeId && eduConvos.length > 0) {
-    setActiveId(eduConvos[eduConvos.length - 1].id);
-  }
+  useEffect(() => {
+    if (!activeId && eduConvos.length > 0) {
+      setActiveId(eduConvos[eduConvos.length - 1].id);
+    }
+  }, [activeId, eduConvos]);
 
   const starterQuestions = [
     { title: "Intermittent Fasting", desc: "What are the scientific benefits of intermittent fasting?", icon: "🕒" },

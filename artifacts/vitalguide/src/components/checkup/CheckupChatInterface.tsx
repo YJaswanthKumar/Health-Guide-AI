@@ -182,11 +182,10 @@ const CheckupChatInterface = forwardRef<CheckupChatHandle, CheckupChatProps>(fun
 
   // Auto-prompt on mount
   useEffect(() => {
-    if (autoPrompt && !autoPromptFiredRef.current && agentStatus === "idle") {
-      autoPromptFiredRef.current = true;
-      const timer = setTimeout(() => sendText(autoPrompt), 400);
-      return () => clearTimeout(timer);
-    }
+    if (!(autoPrompt && !autoPromptFiredRef.current && agentStatus === "idle")) return;
+    autoPromptFiredRef.current = true;
+    const timer = setTimeout(() => sendText(autoPrompt), 400);
+    return () => clearTimeout(timer);
   }, [autoPrompt, agentStatus, sendText]);
 
   useImperativeHandle(ref, () => ({

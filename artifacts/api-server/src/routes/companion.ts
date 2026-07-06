@@ -189,7 +189,7 @@ router.post("/proactive", async (req, res) => {
     let content = `Good ${getTimeOfDay()}, ${profile.name}! I'm your personal care companion. How are you feeling today?`;
 
     try {
-      const output = await invokeAgent("agent3", input, 90000) as AgentCarePlannerOutput;
+      const output = await invokeAgent("agent3", input, 10000) as AgentCarePlannerOutput;
       const companion = output?.dashboard_companion;
       content =
         companion?.message ??

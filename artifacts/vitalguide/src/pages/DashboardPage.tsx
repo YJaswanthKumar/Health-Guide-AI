@@ -100,7 +100,9 @@ export default function DashboardPage() {
     queryClient.invalidateQueries({ queryKey: getGetTodayLogQueryKey() });
   };
 
-  if (isLoadingProfile || isLoadingPlans || isLoadingLog) {
+  const isMissingProfile = profileError instanceof ApiError && profileError.status === 404;
+
+  if (isLoadingProfile || (!profile && !profileError)) {
     return (
       <div className="max-w-5xl mx-auto space-y-6">
         <Skeleton className="h-10 w-48 rounded-lg" />
@@ -119,7 +121,29 @@ export default function DashboardPage() {
     );
   }
 
-  if (!profile) return null;
+  if (isMissingProfile) {
+    return (
+      <div className="max-w-5xl mx-auto space-y-6">
+        <Skeleton className="h-10 w-48 rounded-lg" />
+        <Skeleton className="h-40 w-full rounded-2xl" />
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div className="max-w-5xl mx-auto flex flex-col items-center justify-center py-24 gap-4 text-center">
+        <AlertCircle className="w-10 h-10 text-amber-400" />
+        <h2 className="text-lg font-semibold text-slate-700">Could not load your dashboard</h2>
+        <p className="text-sm text-slate-500 max-w-sm">
+          There was a problem connecting to the server. Please refresh the page.
+        </p>
+        <Button variant="outline" onClick={() => window.location.reload()}>
+          Refresh
+        </Button>
+      </div>
+    );
+  }
 
   const activePlansCount = plans?.filter(p => p.status === "active").length || 0;
   const log = todayLog as DailyLog | undefined;

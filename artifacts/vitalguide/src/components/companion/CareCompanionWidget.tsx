@@ -9,6 +9,8 @@ type CompanionMessage = {
   createdAt: string;
 };
 
+const PROACTIVE_TIMEOUT_MS = 12000;
+
 export default function CareCompanionWidget() {
   const [, setLocation] = useLocation();
   const [message, setMessage] = useState<CompanionMessage | null>(null);
@@ -17,14 +19,22 @@ export default function CareCompanionWidget() {
 
   useEffect(() => {
     let cancelled = false;
+    const controller = new AbortController();
+
     async function load() {
       try {
-        const latestRes = await fetch("/api/companion/latest", { credentials: "include" });
+        const latestRes = await fetch("/api/companion/latest", {
+          credentials: "include",
+          signal: controller.signal,
+        });
         if (!latestRes.ok) throw new Error("fetch failed");
         const latest: CompanionMessage | null = await latestRes.json();
 
         const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000);
-        const isRecent = latest && latest.role === "assistant" && new Date(latest.createdAt) > fourHoursAgo;
+        const isRecent =
+          latest &&
+          latest.role === "assistant" &&
+          new Date(latest.createdAt) > fourHoursAgo;
 
         if (isRecent) {
           if (!cancelled) { setMessage(latest); setLoading(false); }
@@ -32,20 +42,34 @@ export default function CareCompanionWidget() {
         }
 
         if (!cancelled) setGenerating(true);
-        const proactiveRes = await fetch("/api/companion/proactive", {
-          method: "POST",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-        });
-        if (!proactiveRes.ok) throw new Error("proactive failed");
-        const data = await proactiveRes.json() as { message: CompanionMessage };
-        if (!cancelled) { setMessage(data.message); setLoading(false); setGenerating(false); }
+
+        const timeoutId = setTimeout(() => controller.abort(), PROACTIVE_TIMEOUT_MS);
+
+        try {
+          const proactiveRes = await fetch("/api/companion/proactive", {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            signal: controller.signal,
+          });
+          clearTimeout(timeoutId);
+          if (!proactiveRes.ok) throw new Error("proactive failed");
+          const data = await proactiveRes.json() as { message: CompanionMessage };
+          if (!cancelled) { setMessage(data.message); setLoading(false); setGenerating(false); }
+        } catch (proactiveErr) {
+          clearTimeout(timeoutId);
+          throw proactiveErr;
+        }
       } catch {
         if (!cancelled) { setLoading(false); setGenerating(false); }
       }
     }
+
     load();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
   }, []);
 
   const preview = message?.content
