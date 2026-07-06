@@ -9,6 +9,7 @@ export const conversations = pgTable("conversations", {
   title: text("title").notNull(),
   checkupAssessment: jsonb("checkup_assessment"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull().$onUpdate(() => new Date()),
 });
 
 export const insertConversationSchema = createInsertSchema(conversations).omit({

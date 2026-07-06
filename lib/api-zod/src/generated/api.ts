@@ -255,7 +255,8 @@ export const ListConversationsResponseItem = zod.object({
   "id": zod.number(),
   "mode": zod.string(),
   "title": zod.string(),
-  "createdAt": zod.string()
+  "createdAt": zod.string(),
+  "updatedAt": zod.string().nullish()
 })
 export const ListConversationsResponse = zod.array(ListConversationsResponseItem)
 

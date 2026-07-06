@@ -568,6 +568,8 @@ components:
           type: string
         createdAt:
           type: string
+        updatedAt:
+          type: ["string", "null"]
 
     ConversationInput:
       type: object

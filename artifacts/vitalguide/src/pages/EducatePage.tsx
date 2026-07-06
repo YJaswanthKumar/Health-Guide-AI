@@ -1,8 +1,5 @@
 import { useState, useEffect, useRef } from "react";
 import { useListConversations, useGetConversationMessages, useCreateConversation, getGetConversationMessagesQueryKey, getListConversationsQueryKey, type Message, type Conversation } from "@workspace/api-client-react";
-
-// Extend the generated Conversation type with the updatedAt field returned by the API
-type EduConvo = Conversation & { updatedAt?: string | null };
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { BookOpen, Plus, MessageSquare, Menu, X, Search, Clock, Sparkles, Bot, User, Send, WifiOff } from "lucide-react";
@@ -83,9 +80,9 @@ export default function EducatePage() {
   const { data: conversations, isLoading: isLoadingConvos } = useListConversations({ query: { queryKey: getListConversationsQueryKey() } });
   const createConversation = useCreateConversation();
 
-  const eduConvos = ((conversations as EduConvo[] | undefined)?.filter((c: EduConvo) => c.mode === "education") ?? [])
+  const eduConvos = (conversations?.filter((c: Conversation) => c.mode === "education") ?? [])
     .slice()
-    .sort((a: EduConvo, b: EduConvo) => new Date(b.updatedAt ?? b.createdAt).getTime() - new Date(a.updatedAt ?? a.createdAt).getTime());
+    .sort((a: Conversation, b: Conversation) => new Date(b.updatedAt ?? b.createdAt).getTime() - new Date(a.updatedAt ?? a.createdAt).getTime());
 
   const [activeId, setActiveId] = useState<number | null>(null);
   const [autoPrompt, setAutoPrompt] = useState<string | undefined>(undefined);
@@ -99,7 +96,7 @@ export default function EducatePage() {
   }, [activeId, eduConvos]);
 
   const filteredConvos = search.trim()
-    ? eduConvos.filter((c: EduConvo) => c.title.toLowerCase().includes(search.toLowerCase()))
+    ? eduConvos.filter((c: Conversation) => c.title.toLowerCase().includes(search.toLowerCase()))
     : eduConvos;
 
   const startTopic = (topic: typeof TOPICS[number]) => {
@@ -177,7 +174,7 @@ export default function EducatePage() {
             {search ? "No matching topics" : "No topics explored yet. Start one below."}
           </div>
         ) : (
-          filteredConvos.map((c: EduConvo) => (
+          filteredConvos.map((c: Conversation) => (
             <button
               key={c.id}
               onClick={() => { setActiveId(c.id); setAutoPrompt(undefined); setSidebarOpen(false); }}
@@ -253,7 +250,7 @@ export default function EducatePage() {
           </button>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-slate-800 truncate">
-              {activeId ? (eduConvos.find((c: EduConvo) => c.id === activeId)?.title ?? "Education") : "Health Education"}
+              {activeId ? (eduConvos.find((c: Conversation) => c.id === activeId)?.title ?? "Education") : "Health Education"}
             </p>
           </div>
           <Button

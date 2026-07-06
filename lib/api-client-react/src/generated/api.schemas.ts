@@ -172,6 +172,8 @@ export interface Conversation {
   mode: string;
   title: string;
   createdAt: string;
+  /** @nullable */
+  updatedAt?: string | null;
 }
 
 export interface ConversationInput {
