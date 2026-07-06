@@ -1,4 +1,5 @@
 - [Replit artifact workflow conflict](artifact-workflow-conflict.md) — `artifacts/api-server: API Server` owns port 8080; `Backend API` custom workflow conflicts and must not be restarted.
+- [Education Agent 5 route](education-agent5-route.md) — Education chats use `/api/education-agent` (JSON, not SSE); Agent 5 kickoff+poll with Gemini fallback; `EduConvo` type extends `Conversation` with optional `updatedAt`.
 - [Clerk env setup](clerk-env-setup.md) — After re-import: run `pnpm install`, set `CLERK_PUBLISHABLE_KEY`+`VITE_CLERK_PUBLISHABLE_KEY` as env vars, request `CLERK_SECRET_KEY`/`GEMINI_API_KEY`/`OPENAI_API_KEY` as secrets. Do NOT set `VITE_CLERK_PROXY_URL` in dev.
 - [Chat AI provider](chat-ai-provider.md) — Chat routes use OpenAI GPT-4o-mini (OPENAI_API_KEY); Gemini code removed. IDOR fixes applied to GET messages and DELETE conversation routes.
 - [Separator component missing](shadcn-separator.md) — shadcn Separator is NOT installed; use `<div className="border-t border-slate-100" />` instead.

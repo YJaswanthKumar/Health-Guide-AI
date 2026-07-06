@@ -8,6 +8,7 @@ import documentsRouter from "./documents";
 import tasksRouter from "./tasks";
 import companionRouter from "./companion";
 import checkupAgentRouter from "./checkup";
+import educationAgentRouter from "./education";
 
 const router: IRouter = Router();
 
@@ -20,5 +21,6 @@ router.use("/documents", documentsRouter);
 router.use("/tasks", tasksRouter);
 router.use("/companion", companionRouter);
 router.use("/checkup-agent", checkupAgentRouter);
+router.use("/education-agent", educationAgentRouter);
 
 export default router;

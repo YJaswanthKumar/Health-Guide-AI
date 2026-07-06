@@ -1,0 +1,309 @@
+This project has been imported from another Replit workspace because the previous workspace reached its monthly AI quota.
+
+IMPORTANT
+
+This is NOT a new project.
+
+Do NOT redesign the architecture.
+
+Do NOT recreate completed functionality.
+
+Read README.md and PROGRESS.md completely before making any changes.
+
+Read the entire project and compare the implementation with the documentation before continuing.
+
+=========================================================
+CURRENT PROJECT STATUS
+=========================================================
+
+Technology Stack
+
+- React + Vite
+- Express
+- PostgreSQL
+- Drizzle ORM
+- Clerk Authentication
+
+The MongoDB migration has been postponed.
+
+Continue using PostgreSQL + Drizzle only.
+
+The five CrewAI agents are available again and should remain integrated.
+
+=========================================================
+WORK ALREADY COMPLETED
+=========================================================
+
+The previous Replit workspace already completed:
+
+- Dashboard blank-page fixes
+- Loading skeletons
+- Better error handling
+- Care Companion timeout improvements
+- React render-state fixes
+- Conversation query improvements
+- TypeScript fixes
+- Plan Tracker improvements
+- Action Plan schema improvements
+- Agent 3 CRUD integration
+- Calendar modal
+- Dashboard summary cards
+- Session persistence fixes
+- Profile fixes
+- Documentation updates
+
+DO NOT redo these changes.
+
+=========================================================
+LAST WORKSPACE STOPPED HERE
+=========================================================
+
+The previous workspace already:
+
+- Read all backend routes
+- Read EducatePage
+- Read PlannerPage
+- Planned the remaining implementation
+- Started rewriting EducatePage
+
+The AI quota ended while editing EducatePage.tsx.
+
+Continue from THIS exact point.
+
+=========================================================
+CURRENT IMPLEMENTATION PRIORITY
+=========================================================
+
+Continue implementing the remaining features in this order.
+
+---------------------------------------------------------
+1. EDUCATION PAGE
+---------------------------------------------------------
+
+Finish rebuilding EducatePage.
+
+Requirements:
+
+- Left conversation sidebar
+- Previous education chats
+- Search conversations
+- Mobile drawer
+- Responsive layout
+- Six education topics
+
+Topics:
+
+- Nutrition
+- Exercise
+- Mental Health
+- Healthy Lifestyle
+- Medication Safety
+- Medical Reports
+
+When a topic is clicked:
+
+Automatically create a new conversation.
+
+Automatically send the starter message.
+
+Automatically call Agent 5.
+
+Conversation history must persist in PostgreSQL.
+
+Refreshing must restore conversations.
+
+---------------------------------------------------------
+2. HEALTH CHECKUP
+---------------------------------------------------------
+
+Redesign Health Checkup into ChatGPT-style conversations.
+
+Requirements:
+
+Desktop:
+
+Left Sidebar
+
+Conversation List
+
+Main Chat
+
+Mobile:
+
+Drawer
+
+Conversation List
+
+Main Chat
+
+Uploading a document during signup should:
+
+- upload document
+- create Health Checkup conversation
+- redirect
+- open conversation
+
+Uploading from Profile should perform the same workflow.
+
+Agent 1 should analyze the uploaded report.
+
+Conversation history must persist.
+
+---------------------------------------------------------
+3. PLAN TRACKER
+---------------------------------------------------------
+
+Continue improving Action Plan Management.
+
+Plans must support:
+
+- title
+- category
+- duration
+- progress
+- current day
+- completed days
+- remaining days
+- timeline
+- statistics
+
+Tasks belong to plans.
+
+Dashboard should automatically display:
+
+- Active Plans
+- Completed Plans
+- Today's Tasks
+- Progress
+- Health Score (future)
+- Compliance Score (future)
+
+Calendar should open as a centered modal.
+
+Improve the overall UI.
+
+---------------------------------------------------------
+4. CARE COMPANION
+---------------------------------------------------------
+
+Transform the Care Companion into a proactive healthcare assistant.
+
+Reduce typing.
+
+Use interactive UI components.
+
+Examples:
+
+Medication buttons
+
+Water intake buttons
+
+Mood cards
+
+Meal buttons
+
+Sleep buttons
+
+Quick replies
+
+Suggested replies
+
+Context-aware follow-up questions
+
+Agent 3 should proactively interact with users.
+
+---------------------------------------------------------
+5. MOBILE EXPERIENCE
+---------------------------------------------------------
+
+Review every page.
+
+Improve:
+
+- spacing
+- responsiveness
+- typography
+- cards
+- chat layout
+- sidebars
+- drawers
+- overflow
+- scrolling
+
+The application should feel like a modern healthcare application.
+
+---------------------------------------------------------
+6. AI AGENT VERIFICATION
+---------------------------------------------------------
+
+Verify all five deployed CrewAI agents.
+
+Agent 1
+
+Medical Report Intelligence
+
+Agent 2
+
+Health Assessment
+
+Agent 3
+
+Care Planner
+
+Agent 4
+
+Emergency Navigator
+
+Agent 5
+
+Nutrition Intelligence
+
+Verify:
+
+- endpoint
+- request format
+- response parsing
+- graceful error handling
+
+The frontend must never crash if an agent is unavailable.
+
+---------------------------------------------------------
+DOCUMENTATION
+---------------------------------------------------------
+
+Whenever a major milestone is completed:
+
+Update README.md.
+
+Update PROGRESS.md.
+
+Include:
+
+- modified files
+- completed work
+- database changes
+- API changes
+- UI changes
+- remaining work
+
+---------------------------------------------------------
+HANDOVER
+---------------------------------------------------------
+
+Because this project is being developed across multiple Replit accounts with limited AI credits, after every major implementation provide a detailed handover including:
+
+- completed work
+- modified files
+- API changes
+- database changes
+- UI changes
+- remaining bugs
+- remaining features
+- exact stopping point
+- exact next recommended task
+
+If AI credits are exhausted, another Replit AI should be able to continue development using only README.md, PROGRESS.md, and the handover summary.
+
+Do not restart completed work.
+
+Continue exactly from where the previous workspace stopped.

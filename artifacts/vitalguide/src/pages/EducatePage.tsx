@@ -1,10 +1,13 @@
-import { useState, useEffect } from "react";
-import { useListConversations, useGetConversationMessages, useCreateConversation, getGetConversationMessagesQueryKey, getListConversationsQueryKey } from "@workspace/api-client-react";
-import ChatInterface from "@/components/chat/ChatInterface";
+import { useState, useEffect, useRef } from "react";
+import { useListConversations, useGetConversationMessages, useCreateConversation, getGetConversationMessagesQueryKey, getListConversationsQueryKey, type Message, type Conversation } from "@workspace/api-client-react";
+
+// Extend the generated Conversation type with the updatedAt field returned by the API
+type EduConvo = Conversation & { updatedAt?: string | null };
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { BookOpen, Plus, MessageSquare, Menu, X, Search, Clock, Sparkles } from "lucide-react";
+import { BookOpen, Plus, MessageSquare, Menu, X, Search, Clock, Sparkles, Bot, User, Send, WifiOff } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { queryClient } from "@/lib/queryClient";
 
 const TOPICS = [
@@ -80,9 +83,9 @@ export default function EducatePage() {
   const { data: conversations, isLoading: isLoadingConvos } = useListConversations({ query: { queryKey: getListConversationsQueryKey() } });
   const createConversation = useCreateConversation();
 
-  const eduConvos = (conversations?.filter(c => c.mode === "education") ?? [])
+  const eduConvos = ((conversations as EduConvo[] | undefined)?.filter((c: EduConvo) => c.mode === "education") ?? [])
     .slice()
-    .sort((a, b) => new Date(b.updatedAt ?? b.createdAt).getTime() - new Date(a.updatedAt ?? a.createdAt).getTime());
+    .sort((a: EduConvo, b: EduConvo) => new Date(b.updatedAt ?? b.createdAt).getTime() - new Date(a.updatedAt ?? a.createdAt).getTime());
 
   const [activeId, setActiveId] = useState<number | null>(null);
   const [autoPrompt, setAutoPrompt] = useState<string | undefined>(undefined);
@@ -96,14 +99,14 @@ export default function EducatePage() {
   }, [activeId, eduConvos]);
 
   const filteredConvos = search.trim()
-    ? eduConvos.filter(c => c.title.toLowerCase().includes(search.toLowerCase()))
+    ? eduConvos.filter((c: EduConvo) => c.title.toLowerCase().includes(search.toLowerCase()))
     : eduConvos;
 
   const startTopic = (topic: typeof TOPICS[number]) => {
     createConversation.mutate(
       { data: { mode: "education", title: topic.title } },
       {
-        onSuccess: (data) => {
+        onSuccess: (data: Conversation) => {
           setActiveId(data.id);
           setAutoPrompt(topic.prompt);
           queryClient.invalidateQueries({ queryKey: getListConversationsQueryKey() });
@@ -117,7 +120,7 @@ export default function EducatePage() {
     createConversation.mutate(
       { data: { mode: "education", title: "Learning Session" } },
       {
-        onSuccess: (data) => {
+        onSuccess: (data: Conversation) => {
           setActiveId(data.id);
           setAutoPrompt(undefined);
           queryClient.invalidateQueries({ queryKey: getListConversationsQueryKey() });
@@ -174,7 +177,7 @@ export default function EducatePage() {
             {search ? "No matching topics" : "No topics explored yet. Start one below."}
           </div>
         ) : (
-          filteredConvos.map(c => (
+          filteredConvos.map((c: EduConvo) => (
             <button
               key={c.id}
               onClick={() => { setActiveId(c.id); setAutoPrompt(undefined); setSidebarOpen(false); }}
@@ -250,7 +253,7 @@ export default function EducatePage() {
           </button>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-slate-800 truncate">
-              {activeId ? (eduConvos.find(c => c.id === activeId)?.title ?? "Education") : "Health Education"}
+              {activeId ? (eduConvos.find((c: EduConvo) => c.id === activeId)?.title ?? "Education") : "Health Education"}
             </p>
           </div>
           <Button
@@ -330,11 +333,196 @@ function EducationChat({ conversationId, autoPrompt }: { conversationId: number;
   );
 
   return (
-    <ChatInterface
+    <EducationChatPanel
       conversationId={conversationId}
       initialMessages={msgs ?? []}
-      mode="education"
       autoPrompt={autoPrompt}
     />
+  );
+}
+
+function EducationChatPanel({
+  conversationId,
+  initialMessages,
+  autoPrompt,
+}: {
+  conversationId: number;
+  initialMessages: Message[];
+  autoPrompt?: string;
+}) {
+  const [messages, setMessages] = useState<Message[]>(initialMessages);
+  const [input, setInput] = useState("");
+  const [isThinking, setIsThinking] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const autoFiredRef = useRef(false);
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  // Sync when conversation switches
+  useEffect(() => {
+    setMessages(initialMessages);
+    autoFiredRef.current = false;
+    setError(null);
+  }, [conversationId]);
+
+  // Keep in sync if DB messages update
+  useEffect(() => {
+    if (initialMessages.length > 0) setMessages(initialMessages);
+  }, [initialMessages]);
+
+  // Auto-scroll
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, isThinking]);
+
+  const sendMessage = async (content: string) => {
+    if (!content.trim() || isThinking) return;
+    setError(null);
+
+    // Optimistic user message
+    const tempId = Date.now();
+    const optimisticUser: Message = {
+      id: tempId,
+      role: "user",
+      content,
+      createdAt: new Date().toISOString(),
+    };
+    setMessages(prev => [...prev, optimisticUser]);
+    setIsThinking(true);
+
+    try {
+      const res = await fetch(`/api/education-agent/conversations/${conversationId}/message`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ content }),
+      });
+
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({ error: `Request failed (${res.status})` }));
+        setError(errBody.error ?? "Something went wrong. Please try again.");
+        setMessages(prev => prev.filter(m => m.id !== tempId));
+        return;
+      }
+
+      const data = await res.json() as { userMessage: Message; assistantMessage: Message };
+      // Replace optimistic message with real DB messages
+      setMessages(prev => [
+        ...prev.filter(m => m.id !== tempId),
+        data.userMessage,
+        data.assistantMessage,
+      ]);
+      queryClient.invalidateQueries({ queryKey: getGetConversationMessagesQueryKey(conversationId) });
+    } catch (err: any) {
+      setError(err?.message ?? "Network error. Please check your connection.");
+      setMessages(prev => prev.filter(m => m.id !== tempId));
+    } finally {
+      setIsThinking(false);
+    }
+  };
+
+  // Auto-fire topic prompt once
+  useEffect(() => {
+    if (!autoPrompt || autoFiredRef.current || isThinking) return;
+    autoFiredRef.current = true;
+    const t = setTimeout(() => sendMessage(autoPrompt), 300);
+    return () => clearTimeout(t);
+  }, [autoPrompt]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim()) return;
+    const text = input;
+    setInput("");
+    sendMessage(text);
+  };
+
+  return (
+    <div className="flex flex-col h-full bg-white rounded-xl overflow-hidden w-full">
+      {/* Error banner */}
+      {error && (
+        <div className="mx-4 mt-3 rounded-lg border border-red-200 bg-red-50 text-red-800 p-3 flex gap-2.5 items-start">
+          <WifiOff className="w-4 h-4 mt-0.5 flex-shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold">Unable to get a response</p>
+            <p className="text-xs mt-0.5 opacity-80">{error}</p>
+          </div>
+          <button onClick={() => setError(null)} className="text-xs opacity-50 hover:opacity-100 flex-shrink-0 ml-1 mt-0.5">✕</button>
+        </div>
+      )}
+
+      <ScrollArea className="flex-1 p-4 md:p-6">
+        <div className="space-y-6">
+          {messages.length === 0 && !isThinking && (
+            <div className="h-full flex flex-col items-center justify-center text-slate-500 py-16 text-center">
+              <div className="w-16 h-16 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center mb-4">
+                <Bot className="w-8 h-8" />
+              </div>
+              <h3 className="text-lg font-medium text-slate-900">How can I help?</h3>
+              <p className="mt-1 max-w-xs text-sm">Send a message to start the conversation.</p>
+            </div>
+          )}
+
+          {messages.map(msg => (
+            <div key={msg.id} className={`flex gap-3 md:gap-4 ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
+              <div className={`w-7 h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-1 ${
+                msg.role === "user" ? "bg-teal-600 text-white" : "bg-indigo-100 text-indigo-700"
+              }`}>
+                {msg.role === "user"
+                  ? <User className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                  : <Bot className="w-3.5 h-3.5 md:w-4 md:h-4" />}
+              </div>
+              <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm md:text-[15px] leading-relaxed shadow-sm ${
+                msg.role === "user"
+                  ? "bg-teal-600 text-white rounded-tr-sm"
+                  : "bg-indigo-50 text-indigo-900 border border-indigo-100 rounded-tl-sm"
+              }`}>
+                <div className="whitespace-pre-wrap font-sans break-words">{msg.content}</div>
+              </div>
+            </div>
+          ))}
+
+          {/* Agent 5 thinking indicator */}
+          {isThinking && (
+            <div className="flex gap-3 md:gap-4">
+              <div className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center flex-shrink-0 mt-1">
+                <Bot className="w-3.5 h-3.5 md:w-4 md:h-4" />
+              </div>
+              <div className="max-w-[85%] rounded-2xl rounded-tl-sm px-4 py-3 bg-indigo-50 border border-indigo-100 shadow-sm">
+                <div className="flex items-center gap-2 text-xs text-indigo-600 mb-2">
+                  <Sparkles className="w-3.5 h-3.5 animate-pulse" />
+                  <span className="font-medium animate-pulse">Agent 5 is researching your question…</span>
+                </div>
+                <div className="flex gap-1 items-center">
+                  <span className="w-2 h-2 rounded-full bg-indigo-400 animate-bounce [animation-delay:0ms]" />
+                  <span className="w-2 h-2 rounded-full bg-indigo-400 animate-bounce [animation-delay:150ms]" />
+                  <span className="w-2 h-2 rounded-full bg-indigo-400 animate-bounce [animation-delay:300ms]" />
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div ref={bottomRef} className="h-2" />
+        </div>
+      </ScrollArea>
+
+      <div className="p-3 md:p-4 border-t border-slate-100 bg-slate-50/80">
+        <form onSubmit={handleSubmit} className="flex gap-2 md:gap-3 max-w-4xl mx-auto">
+          <Input
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            placeholder="Ask a health question…"
+            className="flex-1 bg-white border-slate-200 shadow-sm h-11 md:h-12 text-sm md:text-base rounded-full px-4 md:px-5 focus-visible:ring-indigo-500"
+            disabled={isThinking}
+          />
+          <Button
+            type="submit"
+            disabled={!input.trim() || isThinking}
+            className="h-11 w-11 md:h-12 md:w-12 rounded-full p-0 flex-shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm"
+          >
+            <Send className="w-4 h-4 md:w-5 md:h-5 ml-0.5" />
+          </Button>
+        </form>
+      </div>
+    </div>
   );
 }
